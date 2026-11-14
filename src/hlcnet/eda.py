@@ -232,3 +232,31 @@ def plot_batch_homogeneity(summary: pd.DataFrame) -> Figure:
         ax.set_xlabel("batch")
     fig.tight_layout()
     return fig
+
+
+def conditional_correlation(
+    cond: Tensor, a: Tensor, b: Tensor, n_bins: int = 10
+) -> pd.DataFrame:
+    """Pearson correlation of ``a`` and ``b`` inside quantile bins of ``cond``.
+
+    Used to measure the effect of HLC on the temperature response once the
+    injected energy is held (approximately) fixed.
+    """
+    edges = torch.quantile(cond.float(), torch.linspace(0, 1, n_bins + 1))
+    rows = []
+    for k in range(n_bins):
+        lo, hi = edges[k], edges[k + 1]
+        m = (cond >= lo) & ((cond < hi) if k < n_bins - 1 else (cond <= hi))
+        if m.sum() < 3:
+            continue
+        r = np.corrcoef(a[m].numpy(), b[m].numpy())[0, 1]
+        rows.append(
+            {
+                "bin": k + 1,
+                "min": lo.item(),
+                "max": hi.item(),
+                "n": int(m.sum()),
+                "corr": r,
+            }
+        )
+    return pd.DataFrame(rows).round(3)

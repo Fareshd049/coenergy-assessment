@@ -17,3 +17,15 @@ def test_excitation_features() -> None:
     assert abs(f["energy_kwh"][1].item() - 7.0) < 1e-5
     assert f["duty"][2].item() == 0.5
     assert f["n_switch"].tolist() == [0, 1, 119]
+
+
+def test_conditional_correlation_recovers_sign() -> None:
+    from hlcnet.eda import conditional_correlation
+
+    g = torch.Generator().manual_seed(0)
+    cond = torch.rand(2000, generator=g)
+    hlc = torch.rand(2000, generator=g)
+    rise = 10 * cond - 3 * hlc  # rise grows with energy, falls with HLC
+    table = conditional_correlation(cond, rise, hlc, n_bins=5)
+    assert len(table) == 5
+    assert (table["corr"] < -0.5).all()
