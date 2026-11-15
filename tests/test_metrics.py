@@ -92,3 +92,13 @@ def test_interval_coverage_is_calibrated_for_gaussian_errors() -> None:
     # an over-confident model (std too small) under-covers
     over = interval_coverage(true, mean, std / 2, levels=(0.95,))
     assert (over["couverture_95%"] < 0.75).all()
+
+
+def test_rare_large_errors_hidden_by_p95() -> None:
+    true = torch.zeros(1000, 1)
+    pred = true.clone()
+    pred[:10] = 60.0  # 1 % of predictions off by 60
+    m = regression_metrics(pred, true, names=["HLC"]).loc["HLC"]
+    assert m["p95_abs"] == 0.0  # P95 does not see them
+    assert m["max_abs"] == 60.0
+    assert m["rmse"] / m["mae"] == pytest.approx(10.0)

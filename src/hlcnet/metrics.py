@@ -46,9 +46,11 @@ def regression_metrics(
 
     Returns:
         DataFrame indexed by indicator with columns ``rmse``, ``mae``,
-        ``bias`` (mean of pred - true), ``mape_%``, ``r2``, ``p95_abs``
-        (95th percentile of the absolute error) and ``nrmse`` (RMSE divided
-        by the standard deviation of the truth).
+        ``bias`` (mean of pred - true), ``mape_%``, ``r2``, ``p95_abs`` and
+        ``p99_abs`` (95th / 99th percentile of the absolute error), ``max_abs``
+        and ``nrmse`` (RMSE divided by the standard deviation of the truth).
+        P95 alone is blind to rare large errors (< 5 % of cases): compare
+        RMSE with MAE and look at P99 / max to detect them.
     """
     if pred.shape != true.shape:
         raise ValueError(f"shape mismatch: {tuple(pred.shape)} vs {tuple(true.shape)}")
@@ -64,6 +66,8 @@ def regression_metrics(
             "mape_%": (100.0 * (err.abs() / t.abs().clamp_min(1e-12)).mean(0)).numpy(),
             "r2": (1.0 - err.pow(2).sum(0) / (t - t.mean(0)).pow(2).sum(0)).numpy(),
             "p95_abs": torch.quantile(err.abs(), 0.95, dim=0).numpy(),
+            "p99_abs": torch.quantile(err.abs(), 0.99, dim=0).numpy(),
+            "max_abs": err.abs().max(0).values.numpy(),
             "nrmse": (rmse / std.clamp_min(1e-12)).numpy(),
         },
         index=pd.Index(list(names), name="indicateur"),
@@ -86,6 +90,7 @@ def family_summary(per_target: pd.DataFrame) -> pd.DataFrame:
             "n_indicateurs": len(idx),
             "rmse_moy": sub["rmse"].mean(),
             "p95_abs_moy": sub["p95_abs"].mean(),
+            "p99_abs_moy": sub["p99_abs"].mean(),
             "mape_%_moy": sub["mape_%"].mean(),
             "r2_moy": sub["r2"].mean(),
             "nrmse_moy": sub["nrmse"].mean(),
