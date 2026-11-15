@@ -12,3 +12,5 @@ wheels/
 data/
 artifacts/checkpoints/
 .ipynb_checkpoints/
+
+artifacts/runs/*/*.pt

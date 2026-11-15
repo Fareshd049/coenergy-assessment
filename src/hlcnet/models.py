@@ -182,12 +182,15 @@ class PhysicsHead(nn.Module):
             nn.init.zeros_(self.log_var.bias)
 
     def forward(self, h: Tensor) -> tuple[Tensor, Tensor | None]:
-        a = self.out(h)
-        params = self.loc + self.scale * a
-        pred = params_to_targets(params, self.head)
-        log_var = (
-            self.log_var(h).clamp(-12.0, 6.0) if self.log_var is not None else None
-        )
+        # computed in float32 even under mixed precision: exp() overflows in float16
+        h = h.float()
+        with torch.autocast(device_type=h.device.type, enabled=False):
+            a = self.out(h)
+            params = self.loc + self.scale * a
+            pred = params_to_targets(params, self.head)
+            log_var = (
+                self.log_var(h).clamp(-12.0, 6.0) if self.log_var is not None else None
+            )
         return pred, log_var
 
 
