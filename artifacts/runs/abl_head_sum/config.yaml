@@ -1,0 +1,63 @@
+name: abl_head_sum
+data:
+  folder: /kaggle/working/data
+  train_batches:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  val_batches:
+  - 14
+  - 15
+  - 16
+  test_batches:
+  - 17
+  - 18
+  - 19
+  per_batch_train: 10000
+  per_batch_eval: 5000
+  log_cdt: true
+model:
+  arch: cnn_gru
+  head: sum
+  use_derivative: true
+  predict_uncertainty: true
+  seq_len: 480
+  conv_channels: 64
+  gru_hidden: 64
+  gru_layers: 2
+  bidirectional: true
+  mlp_hidden: 256
+  dropout: 0.1
+loss:
+  kind: nll
+  beta: 0.5
+  huber_delta: 1.0
+  family_weights:
+    HLC: 1.0
+    Hb: 1.0
+    CDT: 1.0
+train:
+  epochs: 30
+  batch_size: 256
+  lr: 0.002
+  weight_decay: 0.0001
+  warmup_epochs: 1.0
+  mse_warmup_epochs: 2
+  grad_clip: 1.0
+  patience: 6
+  noise_temp_std: 0.0
+  amp: true
+  device: auto
+  num_workers: 2
+  seed: 0

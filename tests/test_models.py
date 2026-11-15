@@ -38,7 +38,7 @@ def test_params_roundtrip(head: str) -> None:
     assert torch.allclose(back, y, rtol=1e-5, atol=1e-4)
 
 
-@pytest.mark.parametrize("arch", ["cnn_gru", "mlp"])
+@pytest.mark.parametrize("arch", ["cnn_gru", "tcn_gru", "tcn", "film_gru", "mlp"])
 @pytest.mark.parametrize("head", ["share", "sum"])
 def test_constraints_hold_for_any_input(arch: str, head: str) -> None:
     y = physical_targets()
@@ -58,7 +58,7 @@ def test_constraints_hold_for_any_input(arch: str, head: str) -> None:
     assert v.loc["part valeurs négatives"] == 0.0
 
 
-@pytest.mark.parametrize("arch", ["cnn_gru", "mlp"])
+@pytest.mark.parametrize("arch", ["cnn_gru", "tcn_gru", "tcn", "film_gru", "mlp"])
 def test_forward_shapes_and_initial_prediction(arch: str) -> None:
     y = physical_targets()
     x = fake_inputs()
@@ -70,7 +70,7 @@ def test_forward_shapes_and_initial_prediction(arch: str) -> None:
     # at initialization the model predicts close to the typical building
     typical = y.double().log().mean(0).exp()[0].item()  # geometric mean of HLC
     assert out.pred[:, 0].sub(typical).abs().max().item() < 0.05 * typical
-    if arch == "cnn_gru":
+    if arch != "mlp":
         assert out.attention is not None
         assert torch.allclose(out.attention.sum(1), torch.ones(8), atol=1e-5)
     assert count_parameters(model) > 0
@@ -96,3 +96,21 @@ def test_without_derivative_or_uncertainty() -> None:
     out = model(x)
     assert out.log_var is None
     assert out.pred.shape == (8, 6)
+
+
+def test_tcn_receptive_field_covers_the_series() -> None:
+    cfg = ModelConfig(arch="tcn", tcn_levels=6, tcn_kernel=5)
+    rf = 1 + 2 * (cfg.tcn_kernel - 1) * (2**cfg.tcn_levels - 1)
+    assert rf >= cfg.seq_len
+
+
+def test_film_starts_as_identity() -> None:
+    from hlcnet.models import TCNRegressor
+
+    y = physical_targets()
+    x = fake_inputs()
+    cfg = ModelConfig(arch="film_gru")
+    model = build_model(cfg, ModelStats.from_data(x, y, cfg.head))
+    assert isinstance(model, TCNRegressor)
+    for proj in model.film_proj:
+        assert proj.weight.abs().sum().item() == 0.0

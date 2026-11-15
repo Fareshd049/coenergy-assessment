@@ -29,6 +29,20 @@ Design (each choice is justified by a finding of the EDA, section 3):
   deviation of their log on the training set; the share uses a logit. The
   network output ``a`` is therefore a standardized quantity and the model
   starts from the typical building.
+* **Encoder variants** (``arch``), compared under identical conditions:
+
+  - ``"cnn_gru"``: 3 convolutions (receptive field ~25 min) + BiGRU, as in the
+    coEnergy paper;
+  - ``"tcn_gru"``: residual temporal convolutional network with dilations
+    1, 2, 4, ... (receptive field of hours) before the BiGRU, inspired by the
+    TCN-LSTM models used to estimate battery health from partial charge curves;
+  - ``"tcn"``: the same TCN without recurrence (does the GRU still help once
+    the convolutions see the whole series?);
+  - ``"film_gru"``: ``U`` is not an input channel but *modulates* the ``Tint``
+    features at every TCN level (FiLM, Perez et al. 2018), testing the EDA's
+    claim that ``Tint`` must be read conditionally on ``U``;
+  - ``"mlp"``: non-sequential baseline.
+
 * **Uncertainty.** An optional head predicts a log-variance per indicator, in
   the space where the loss is computed (standardized, log for the time
   constants), trained with a Gaussian likelihood (see ``losses.py``).
@@ -43,7 +57,7 @@ import torch
 from torch import Tensor, nn
 
 HeadKind = Literal["share", "sum", "free"]
-ArchKind = Literal["cnn_gru", "mlp"]
+ArchKind = Literal["cnn_gru", "tcn_gru", "tcn", "film_gru", "mlp"]
 
 _EPS = 1e-6
 _N_TARGETS = 6
@@ -67,6 +81,8 @@ class ModelConfig:
     gru_layers: int = 2
     bidirectional: bool = True
     mlp_hidden: int = 256
+    tcn_levels: int = 6
+    tcn_kernel: int = 5
     dropout: float = 0.1
 
 
@@ -315,10 +331,122 @@ class MLPRegressor(nn.Module):
         return ModelOutput(pred, log_var, None)
 
 
+class TemporalBlock(nn.Module):
+    """Residual block of two dilated convolutions (non-causal, same length).
+
+    An optional FiLM modulation ``(gamma, beta)`` rescales and shifts the
+    features after the first convolution: ``z * (1 + gamma) + beta``.
+    """
+
+    def __init__(
+        self, channels: int, kernel: int, dilation: int, dropout: float
+    ) -> None:
+        super().__init__()
+        if kernel % 2 == 0:
+            raise ValueError("kernel size must be odd to keep the sequence length")
+        pad = dilation * (kernel - 1) // 2
+        self.conv1 = nn.Conv1d(
+            channels, channels, kernel, padding=pad, dilation=dilation
+        )
+        self.bn1 = nn.BatchNorm1d(channels)
+        self.conv2 = nn.Conv1d(
+            channels, channels, kernel, padding=pad, dilation=dilation
+        )
+        self.bn2 = nn.BatchNorm1d(channels)
+        self.act = nn.GELU()
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, h: Tensor, film: tuple[Tensor, Tensor] | None = None) -> Tensor:
+        """``h``: ``(B, C, T)``; ``film``: ``(gamma, beta)`` each ``(B, C, T)``."""
+        z = self.bn1(self.conv1(h))
+        if film is not None:
+            gamma, beta = film
+            z = z * (1 + gamma) + beta
+        z = self.drop(self.act(z))
+        z = self.bn2(self.conv2(z))
+        return self.act(h + z)
+
+
+class TCNRegressor(nn.Module):
+    """Temporal convolutional encoders: ``tcn_gru``, ``tcn`` and ``film_gru``.
+
+    With ``L`` levels of kernel ``k`` (dilations ``1 .. 2**(L-1)``, two
+    convolutions per level), the receptive field is
+    ``1 + 2 (k - 1) (2**L - 1)`` minutes: 505 min for ``k = 5, L = 6``.
+    """
+
+    def __init__(self, cfg: ModelConfig, stats: ModelStats) -> None:
+        super().__init__()
+        self.cfg = cfg
+        self.inputs = InputChannels(cfg.use_derivative, stats.deriv_std)
+        self.film = cfg.arch == "film_gru"
+        self.use_gru = cfg.arch in ("tcn_gru", "film_gru")
+        c = cfg.conv_channels
+        n_in = self.inputs.n_channels - (
+            1 if self.film else 0
+        )  # U goes to the FiLM branch
+        self.stem = _conv_block(n_in, c, k=7)
+        dilations = [2**i for i in range(cfg.tcn_levels)]
+        self.blocks = nn.ModuleList(
+            TemporalBlock(c, cfg.tcn_kernel, d, cfg.dropout) for d in dilations
+        )
+        if self.film:
+            self.u_encoder = nn.Sequential(
+                _conv_block(1, c, k=7), _conv_block(c, c, k=5, dilation=2)
+            )
+            self.film_proj = nn.ModuleList(nn.Conv1d(c, 2 * c, 1) for _ in dilations)
+            for proj in self.film_proj:  # start as identity: gamma = beta = 0
+                nn.init.zeros_(proj.weight)
+                nn.init.zeros_(proj.bias)
+        if self.use_gru:
+            self.down = _conv_block(c, c, k=5, stride=2)
+            self.gru = nn.GRU(
+                c,
+                cfg.gru_hidden,
+                num_layers=cfg.gru_layers,
+                batch_first=True,
+                bidirectional=cfg.bidirectional,
+                dropout=cfg.dropout if cfg.gru_layers > 1 else 0.0,
+            )
+            d = cfg.gru_hidden * (2 if cfg.bidirectional else 1)
+        else:
+            d = c
+        self.pool = AttentionPooling(d)
+        self.trunk = nn.Sequential(
+            nn.Linear(2 * d, 128), nn.GELU(), nn.Dropout(cfg.dropout)
+        )
+        self.head = PhysicsHead(128, cfg.head, stats, cfg.predict_uncertainty)
+
+    def forward(self, x: Tensor) -> ModelOutput:
+        """``x``: ``(B, T, 2)`` normalized ``[Tint, U]``."""
+        chans = self.inputs(x).transpose(1, 2)  # (B, C_in, T), U is the last channel
+        if self.film:
+            cond = self.u_encoder(chans[:, -1:])
+            h = self.stem(chans[:, :-1])
+        else:
+            h = self.stem(chans)
+        for i, block in enumerate(self.blocks):
+            film = None
+            if self.film:
+                gamma, beta = self.film_proj[i](cond).chunk(2, dim=1)
+                film = (gamma, beta)
+            h = block(h, film)
+        if self.use_gru:
+            seq, _ = self.gru(self.down(h).transpose(1, 2))
+        else:
+            seq = h.transpose(1, 2)
+        context, w = self.pool(seq)
+        feats = torch.cat([context, seq.mean(dim=1)], dim=1)
+        pred, log_var = self.head(self.trunk(feats))
+        return ModelOutput(pred, log_var, w)
+
+
 def build_model(cfg: ModelConfig, stats: ModelStats) -> nn.Module:
     """Factory used by the training script and the notebook."""
     if cfg.arch == "cnn_gru":
         return CNNGRURegressor(cfg, stats)
+    if cfg.arch in ("tcn_gru", "tcn", "film_gru"):
+        return TCNRegressor(cfg, stats)
     if cfg.arch == "mlp":
         return MLPRegressor(cfg, stats)
     raise ValueError(f"unknown arch {cfg.arch!r}")
