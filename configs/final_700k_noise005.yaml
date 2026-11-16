@@ -1,0 +1,28 @@
+# Final model trained with 0.05 °C Gaussian noise on Tint (realistic minute-to-minute sensor noise).
+name: final_700k_noise005
+data:
+  folder: data/quentin_house
+  per_batch_train: null
+  per_batch_eval: 10000
+model:
+  arch: cnn_gru
+  head: share
+  use_derivative: true
+  predict_uncertainty: true
+  conv_channels: 64
+  gru_hidden: 64
+  gru_layers: 2
+  bidirectional: true
+loss:
+  kind: nll
+  beta: 0.5
+train:
+  epochs: 40
+  batch_size: 256
+  lr: 0.002
+  mse_warmup_epochs: 2
+  patience: 8
+  noise_temp_std: 0.05
+  amp: true
+  device: auto
+  num_workers: 2
