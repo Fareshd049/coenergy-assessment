@@ -1,0 +1,28 @@
+# Noise robustness: trained with 0.05 °C noise. Otherwise identical to configs/full.yaml.
+name: abl_noise005
+data:
+  folder: data/quentin_house
+  per_batch_train: 10000
+  per_batch_eval: 5000
+model:
+  arch: cnn_gru
+  head: share
+  use_derivative: true
+  predict_uncertainty: true
+  conv_channels: 64
+  gru_hidden: 64
+  gru_layers: 2
+  bidirectional: true
+loss:
+  kind: nll
+  beta: 0.5
+train:
+  epochs: 30
+  batch_size: 256
+  lr: 0.002
+  mse_warmup_epochs: 2
+  patience: 6
+  noise_temp_std: 0.05
+  amp: true
+  device: auto
+  num_workers: 2

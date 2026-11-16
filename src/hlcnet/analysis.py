@@ -98,6 +98,37 @@ def noise_robustness(
     return out
 
 
+def noise_coverage(
+    model: nn.Module,
+    normalizer: Normalizer,
+    x: Tensor,
+    y: Tensor,
+    device: torch.device,
+    levels: Sequence[float] = (0.0, 0.02, 0.05, 0.1, 0.25),
+    nominal: float = 0.95,
+) -> pd.DataFrame:
+    """Observed coverage of the nominal intervals when ``Tint`` is noisy.
+
+    Shows whether the model *knows* that noisy inputs make it less accurate:
+    a coverage far below ``nominal`` means over-confidence.
+    """
+    z = float(
+        torch.distributions.Normal(0.0, 1.0).icdf(torch.tensor(0.5 + nominal / 2))
+    )
+    zt = normalizer.transform_y(y.double())
+    rows = {}
+    for lv in levels:
+        p = predict_physical(model, normalizer, x, device, noise_std=lv)
+        if p.log_var is None:
+            return pd.DataFrame()
+        err = (zt - normalizer.transform_y(p.pred.double())).abs()
+        inside = err <= z * torch.exp(0.5 * p.log_var.double())
+        rows[lv] = inside.double().mean(0).numpy()
+    out = pd.DataFrame(rows, index=list(TARGET_NAMES)).T
+    out.index.name = "bruit (°C)"
+    return out
+
+
 def plot_noise_robustness(
     curves: dict[str, pd.DataFrame], metric: str = "R²"
 ) -> Figure:

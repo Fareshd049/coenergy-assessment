@@ -141,9 +141,9 @@ def fit(
     sched = make_scheduler(opt, len(loaders["train"]), cfg)
     use_amp = cfg.amp and device.type == "cuda"
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
-    noise_scale = cfg.noise_temp_std / float(
-        normalizer.x_std[0]
-    )  # °C -> normalized units
+    x_std_temp = float(normalizer.x_std[0])  # °C -> normalized units
+    noise_scale = cfg.noise_temp_std / x_std_temp
+    noise_max = cfg.noise_temp_max / x_std_temp
 
     history = History()
     best_state: dict[str, Tensor] | None = None
@@ -155,9 +155,14 @@ def fit(
         t0, total, n = time.perf_counter(), 0.0, 0
         for x, z in loaders["train"]:
             x, z = x.to(device, non_blocking=True), z.to(device, non_blocking=True)
-            if noise_scale > 0:
+            if noise_scale > 0 or noise_max > 0:
                 x = x.clone()
-                x[..., 0] += noise_scale * torch.randn_like(x[..., 0])
+                # fixed level, or one level per simulation drawn uniformly in [0, noise_max]
+                if noise_max > 0:
+                    sigma = noise_max * torch.rand(x.shape[0], 1, device=x.device)
+                    x[..., 0] += sigma * torch.randn_like(x[..., 0])
+                else:
+                    x[..., 0] += noise_scale * torch.randn_like(x[..., 0])
             y = normalizer.inverse_y(z)
             with torch.autocast(device_type=device.type, enabled=use_amp):
                 out = model(x)
