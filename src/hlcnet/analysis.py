@@ -353,6 +353,31 @@ def lognormal_mean_correction(
     return out.float()
 
 
+def ensemble_mean(preds: Sequence[Tensor]) -> Tensor:
+    """Average of physical predictions from several models.
+
+    Averaging preserves every *linear* constraint and inequality satisfied by
+    each member: ``HLC = HLC_ext + HLC_mit``, ``tau_n <= tau_inf <= tau_b``
+    and positivity hold for the ensemble as soon as they hold for each model.
+    """
+    return torch.stack([p.double() for p in preds]).mean(dim=0).float()
+
+
+def mixture_std_z(
+    z_preds: Sequence[Tensor], log_vars: Sequence[Tensor]
+) -> tuple[Tensor, Tensor]:
+    """Mean and standard deviation of an equal-weight Gaussian mixture (loss space).
+
+    ``var = mean(sigma_i^2 + mu_i^2) - mean(mu_i)^2``: the average predicted
+    variance plus the disagreement between members.
+    """
+    mu = torch.stack([z.double() for z in z_preds])
+    var = torch.stack([torch.exp(lv.double()) for lv in log_vars])
+    mean = mu.mean(dim=0)
+    total = (var + mu.pow(2)).mean(dim=0) - mean.pow(2)
+    return mean, total.clamp_min(1e-12).sqrt()
+
+
 def hlc_error_vs_energy(pred: Tensor, true: Tensor, u: Tensor) -> Figure:
     """Absolute HLC error against injected energy (binned medians and IQR)."""
     feats = excitation_features(u)

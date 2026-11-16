@@ -66,3 +66,48 @@ def comparison_table(
 def read_table(path: Path) -> pd.DataFrame:
     """Read a CSV written by ``scripts/evaluate.py`` (first column = index)."""
     return pd.read_csv(path, index_col=0)
+
+
+def val_test_table(
+    run_dir: Path,
+    eval_dir: Path,
+    metrics: tuple[str, ...] = ("r2", "mape_%", "p95_abs"),
+) -> pd.DataFrame:
+    """Validation metrics of a run next to its test metrics.
+
+    Args:
+        run_dir: Run folder holding ``val_metrics.json`` (written at training).
+        eval_dir: Folder holding the test ``per_target.csv`` of ``scripts/evaluate.py``.
+        metrics: Metric names present in both files.
+
+    Returns:
+        DataFrame indexed by indicator, columns ``(metric, "validation" | "test")``.
+    """
+    val = load_metrics(run_dir)["per_target"]
+    test = read_table(Path(eval_dir) / "per_target.csv")
+    cols = {}
+    for m in metrics:
+        cols[(m, "validation")] = pd.Series(val[m], dtype=float).reindex(TARGET_NAMES)
+        cols[(m, "test")] = test[m].reindex(TARGET_NAMES).astype(float)
+    df = pd.DataFrame(cols)
+    df.columns = pd.MultiIndex.from_tuples(df.columns, names=["métrique", "jeu"])
+    df.index.name = "indicateur"
+    return df
+
+
+def bias_corrected_r2(eval_dir: Path) -> pd.DataFrame:
+    """R² of the time constants with the median ``exp(mu)`` and the mean ``exp(mu + s²/2)``.
+
+    Uses ``R² = 1 - (RMSE / std)²`` with ``std = RMSE / nRMSE`` read from
+    ``per_target.csv``; the corrected RMSE comes from ``retransformation_bias.csv``.
+    """
+    per_target = read_table(Path(eval_dir) / "per_target.csv")
+    bias = read_table(Path(eval_dir) / "retransformation_bias.csv")
+    std = per_target["rmse"] / per_target["nrmse"]
+    rows = {}
+    for t in bias.index:
+        rows[t] = {
+            "R² médiane exp(mu)": 1.0 - (bias.loc[t, "rmse médiane"] / std[t]) ** 2,
+            "R² moyenne exp(mu + s²/2)": 1.0 - (bias.loc[t, "rmse moyenne"] / std[t]) ** 2,
+        }
+    return pd.DataFrame(rows).T
