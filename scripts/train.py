@@ -56,12 +56,14 @@ def main() -> None:
             cfg.data.train_batches,
             cfg.data.per_batch_train,
             seed=cfg.train.seed,
+            round_inputs=cfg.data.round_inputs,
         )
         val = load_batches(
             folder,
             cfg.data.val_batches,
             cfg.data.per_batch_eval,
             seed=cfg.train.seed + 1,
+            round_inputs=cfg.data.round_inputs,
         )
     print(f"train: {len(train)} simulations | val: {len(val)} simulations")
 

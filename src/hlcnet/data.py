@@ -111,6 +111,7 @@ def load_batches(
     per_batch: int | None = None,
     time_stride: int = 1,
     seed: int = 0,
+    round_inputs: bool = True,
 ) -> SimData:
     """Load a subset of the simulations, one file at a time.
 
@@ -121,6 +122,9 @@ def load_batches(
         per_batch: Number of simulations sampled per file; ``None`` keeps all.
         time_stride: Keep one time step out of ``time_stride``.
         seed: Seed of the per-file subsampling.
+        round_inputs: Round ``Tint`` to 0.01 °C and ``U`` to 0.1 W (sensor
+            resolution, as in coEnergy's loading example). ``False`` keeps the
+            full simulator precision, to measure the effect of quantization.
 
     Returns:
         A :class:`SimData` with float32 tensors.
@@ -139,8 +143,10 @@ def load_batches(
             else torch.arange(n)
         )
 
-        temp = b.indoor_temperature[idx].round(decimals=TEMP_DECIMALS)
-        u = b.indoor_U[idx].round(decimals=U_DECIMALS)
+        temp, u = b.indoor_temperature[idx], b.indoor_U[idx]
+        if round_inputs:
+            temp = temp.round(decimals=TEMP_DECIMALS)
+            u = u.round(decimals=U_DECIMALS)
         x = torch.stack([temp, u], dim=-1)[:, ::time_stride].float().contiguous()
         y = assemble_targets(b.HLC[idx], b.Hb[idx], b.Hb_labels, b.CDT[idx])
         parts.append(

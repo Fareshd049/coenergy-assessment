@@ -33,6 +33,7 @@ class DataConfig:
     per_batch_train: int | None = 10_000
     per_batch_eval: int | None = 5_000
     log_cdt: bool = True
+    round_inputs: bool = True
 
     def split_spec(self) -> SplitSpec:
         return SplitSpec(
@@ -53,6 +54,9 @@ class TrainConfig:
     grad_clip: float = 1.0
     patience: int = 6
     noise_temp_std: float = 0.0
+    noise_temp_max: float = (
+        0.0  # if > 0: per-sample std drawn uniformly in [0, noise_temp_max]
+    )
     amp: bool = True
     device: str = "auto"
     num_workers: int = 0
