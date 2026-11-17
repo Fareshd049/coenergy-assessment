@@ -97,5 +97,6 @@ scripts/               points d'entrée en ligne de commande (train, evaluate, .
 configs/               une expérience = un fichier YAML
 tests/                 tests unitaires (pytest)
 notebooks/             report.ipynb (rapport), kaggle_train.ipynb (entraînement GPU)
+docs/figures/          schémas du rapport (sources SVG et PNG intégrés au notebook)
 artifacts/             métriques, figures et checkpoints des expériences
 ```

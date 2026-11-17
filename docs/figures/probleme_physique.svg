@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1000 440" width="1000" height="440" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="arr-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d1495b"/></marker>
+    <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <pattern id="wall" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#d9cbb8"/><line x1="0" y1="0" x2="0" y2="8" stroke="#b9a68c" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="1000" height="440" fill="#ffffff"/>
+  <text x="20" y="28" font-size="18" font-weight="bold" fill="#222">Le problème physique</text>
+
+  <!-- mitoyen -->
+  <rect x="20" y="120" width="120" height="270" fill="#fbf1dc" stroke="#d9b56a"/>
+  <text x="80" y="185" font-size="13" text-anchor="middle" fill="#8a6414">Logement</text>
+  <text x="80" y="202" font-size="13" text-anchor="middle" fill="#8a6414">mitoyen</text>
+  <text x="80" y="224" font-size="13" text-anchor="middle" fill="#8a6414" font-style="italic">T<tspan dy="4" font-size="10">mit</tspan></text>
+
+  <!-- extérieur -->
+  <rect x="500" y="45" width="90" height="345" fill="#e3f0f8"/>
+  <text x="545" y="200" font-size="13" text-anchor="middle" fill="#1f6688">Extérieur</text>
+  <text x="545" y="220" font-size="13" text-anchor="middle" fill="#1f6688" font-style="italic">T<tspan dy="4" font-size="10">ext</tspan><tspan dy="-4">(t)</tspan></text>
+
+  <!-- maison : murs + toit -->
+  <polygon points="140,120 320,50 500,120" fill="url(#wall)" stroke="#8d7b68"/>
+  <rect x="140" y="120" width="360" height="270" fill="url(#wall)" stroke="#8d7b68"/>
+  <rect x="164" y="140" width="312" height="230" fill="#fff8f5" stroke="#8d7b68"/>
+  <text x="320" y="160" font-size="12" text-anchor="middle" fill="#7a5c3c">zone étudiée (maille d'air)</text>
+
+  <!-- radiateur -->
+  <rect x="190" y="300" width="70" height="44" rx="4" fill="#f6d6db" stroke="#d1495b"/>
+  <polyline points="196,322 204,312 212,332 220,312 228,332 236,312 244,332 252,322" fill="none" stroke="#d1495b" stroke-width="2"/>
+  <text x="225" y="362" font-size="13" text-anchor="middle" fill="#a52a3c" font-weight="bold">U(t)</text>
+  <text x="225" y="294" font-size="11" text-anchor="middle" fill="#a52a3c">0 / 7 000 W</text>
+
+  <!-- thermomètre -->
+  <rect x="386" y="230" width="12" height="80" rx="6" fill="#ffffff" stroke="#444"/>
+  <circle cx="392" cy="318" r="11" fill="#d1495b" stroke="#444"/>
+  <rect x="389" y="262" width="6" height="50" fill="#d1495b"/>
+  <text x="392" y="350" font-size="13" text-anchor="middle" fill="#222" font-weight="bold">T<tspan dy="4" font-size="10">int</tspan><tspan dy="-4">(t)</tspan></text>
+
+  <!-- flux -->
+  <line x1="300" y1="230" x2="582" y2="230" stroke="#d1495b" stroke-width="3" marker-end="url(#arr-r)"/>
+  <text x="440" y="222" font-size="14" text-anchor="middle" fill="#1f6688" font-weight="bold">HLC<tspan dy="4" font-size="11">ext</tspan></text>
+  <line x1="290" y1="270" x2="62" y2="270" stroke="#d1495b" stroke-width="3" marker-end="url(#arr-r)"/>
+  <text x="200" y="262" font-size="14" text-anchor="middle" fill="#8a6414" font-weight="bold">HLC<tspan dy="4" font-size="11">mit</tspan></text>
+  <line x1="320" y1="140" x2="420" y2="70" stroke="#d1495b" stroke-width="3" marker-end="url(#arr-r)"/>
+
+  <!-- annotation parois -->
+  <text x="320" y="408" font-size="12" text-anchor="middle" fill="#6b5640">parois : masse thermique (constantes de temps τ) — état initial inconnu</text>
+
+  <!-- panneau mesure -->
+  <rect x="615" y="45" width="370" height="345" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
+  <text x="800" y="70" font-size="14" text-anchor="middle" fill="#222" font-weight="bold">Ce que l'on mesure pendant 8 h</text>
+  <text x="635" y="98" font-size="12" fill="#a52a3c">U(t) (W)</text>
+  <line x1="635" y1="150" x2="965" y2="150" stroke="#999"/>
+  <polyline points="635,150 690,150 690,108 760,108 760,150 790,150 790,108 880,108 880,150 905,150 905,108 965,108" fill="none" stroke="#d1495b" stroke-width="2"/>
+  <text x="635" y="180" font-size="12" fill="#222">T<tspan dy="4" font-size="9">int</tspan><tspan dy="-4">(t) (°C)</tspan></text>
+  <line x1="635" y1="262" x2="965" y2="262" stroke="#999"/>
+  <path d="M635,252 C660,250 680,248 690,247 C705,232 730,214 760,208 C770,210 780,214 790,216 C805,204 840,192 880,186 C890,190 898,194 905,196 C920,186 945,176 965,172" fill="none" stroke="#222" stroke-width="2"/>
+  <text x="965" y="278" font-size="11" text-anchor="end" fill="#666">t = 8 h (480 pas d'une minute)</text>
+  <rect x="632" y="292" width="336" height="86" rx="6" fill="#ffffff" stroke="#3a7d44"/>
+  <text x="800" y="314" font-size="13" text-anchor="middle" fill="#2c6135" font-weight="bold">À prédire</text>
+  <text x="800" y="336" font-size="13" text-anchor="middle" fill="#222">HLC, HLC<tspan dy="4" font-size="10">ext</tspan><tspan dy="-4">, HLC</tspan><tspan dy="4" font-size="10">mit</tspan><tspan dy="-4">, τ</tspan><tspan dy="4" font-size="10">b</tspan><tspan dy="-4">, τ</tspan><tspan dy="4" font-size="10">n</tspan><tspan dy="-4">, τ</tspan><tspan dy="4" font-size="10">∞</tspan></text>
+  <text x="800" y="362" font-size="12" text-anchor="middle" fill="#2c6135">contraintes :  HLC = HLC<tspan dy="4" font-size="9">ext</tspan><tspan dy="-4"> + HLC</tspan><tspan dy="4" font-size="9">mit</tspan><tspan dy="-4">   et   τ</tspan><tspan dy="4" font-size="9">n</tspan><tspan dy="-4"> ≤ τ</tspan><tspan dy="4" font-size="9">∞</tspan><tspan dy="-4"> ≤ τ</tspan><tspan dy="4" font-size="9">b</tspan></text>
+  <text x="800" y="425" font-size="12" text-anchor="middle" fill="#666">8 h ≪ τ (10 à 50 h) : seul le début du transitoire est observé</text>
+</svg>

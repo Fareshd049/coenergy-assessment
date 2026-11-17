@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1000 470" width="1000" height="470" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00798c"/></marker>
+  </defs>
+  <rect width="1000" height="470" fill="#ffffff"/>
+  <text x="20" y="28" font-size="18" font-weight="bold" fill="#222">De la physique aux données : un problème inverse</text>
+
+  <!-- causes cachées -->
+  <rect x="20" y="55" width="300" height="200" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
+  <text x="170" y="80" font-size="14" text-anchor="middle" font-weight="bold" fill="#222">Causes</text>
+  <text x="40" y="110" font-size="13" fill="#2c6135" font-weight="bold">θ  bâtiment</text>
+  <text x="58" y="129" font-size="12" fill="#444">déperditions, capacités thermiques</text>
+  <text x="58" y="147" font-size="12" fill="#2c6135">→ y : les 6 indicateurs (inconnus)</text>
+  <text x="40" y="180" font-size="13" fill="#8a6414" font-weight="bold">z  état initial des parois</text>
+  <text x="58" y="199" font-size="12" fill="#444">inconnu, tiré au hasard</text>
+  <text x="40" y="230" font-size="13" fill="#a52a3c" font-weight="bold">u  excitation PRBS</text>
+  <text x="58" y="248" font-size="12" fill="#444">connue (mesurée)</text>
+
+  <!-- observation -->
+  <rect x="680" y="55" width="300" height="200" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
+  <text x="830" y="80" font-size="14" text-anchor="middle" font-weight="bold" fill="#222">Observation x</text>
+  <text x="830" y="100" font-size="12" text-anchor="middle" fill="#444">T<tspan dy="4" font-size="9">int</tspan><tspan dy="-4">(t) et U(t), 480 × 2 valeurs</tspan></text>
+  <line x1="700" y1="160" x2="960" y2="160" stroke="#bbb"/>
+  <polyline points="700,160 745,160 745,122 815,122 815,160 840,160 840,122 905,122 905,160 925,160 925,122 960,122" fill="none" stroke="#d1495b" stroke-width="2"/>
+  <line x1="700" y1="240" x2="960" y2="240" stroke="#bbb"/>
+  <path d="M700,232 C720,231 735,230 745,229 C760,216 790,200 815,196 C825,199 832,202 840,204 C855,192 885,182 905,178 C912,181 918,184 925,186 C935,178 950,172 960,170" fill="none" stroke="#222" stroke-width="2"/>
+  <path d="M700,233 C720,232 735,231 745,230 C760,218 790,203 815,199 C825,202 832,205 840,207 C855,195 885,185 905,181 C912,184 918,187 925,189 C935,181 950,175 960,173" fill="none" stroke="#2e86ab" stroke-width="2" stroke-dasharray="5,3"/>
+  <text x="830" y="256" font-size="11" text-anchor="middle" fill="#2e86ab">2 bâtiments différents, 2 courbes quasi identiques</text>
+
+  <!-- problème direct -->
+  <line x1="330" y1="120" x2="670" y2="120" stroke="#555" stroke-width="3" marker-end="url(#a1)"/>
+  <text x="500" y="105" font-size="14" text-anchor="middle" font-weight="bold" fill="#333">Simulateur S (modèle d'état)</text>
+  <text x="500" y="142" font-size="12" text-anchor="middle" fill="#666">problème direct : bien posé</text>
+
+  <!-- problème inverse -->
+  <line x1="670" y1="200" x2="330" y2="200" stroke="#00798c" stroke-width="3" marker-end="url(#a2)"/>
+  <text x="500" y="187" font-size="14" text-anchor="middle" font-weight="bold" fill="#00798c">Modèle appris : x ↦ p(y | x)</text>
+  <text x="500" y="222" font-size="12" text-anchor="middle" fill="#00798c">une moyenne et une variance par indicateur</text>
+
+  <!-- Hadamard -->
+  <text x="20" y="295" font-size="14" font-weight="bold" fill="#222">Problème inverse mal posé au sens de Hadamard (section 3.7)</text>
+  <rect x="20" y="308" width="310" height="92" rx="8" fill="#fbecee" stroke="#d1495b"/>
+  <text x="35" y="332" font-size="13" font-weight="bold" fill="#a52a3c">✗ Unicité (injectivité)</text>
+  <text x="35" y="354" font-size="12" fill="#333">sans chauffe, HLC = 164 et 322 W/K</text>
+  <text x="35" y="372" font-size="12" fill="#333">pour des courbes à moins de 0,06 °C</text>
+  <text x="35" y="390" font-size="12" fill="#333">→ prédire une loi, pas une valeur</text>
+  <rect x="345" y="308" width="310" height="92" rx="8" fill="#fbecee" stroke="#d1495b"/>
+  <text x="360" y="332" font-size="13" font-weight="bold" fill="#a52a3c">✗ Existence (surjectivité)</text>
+  <text x="360" y="354" font-size="12" fill="#333">les courbes simulées : ≈ 3 dimensions sur 480</text>
+  <text x="360" y="372" font-size="12" fill="#333">une mesure bruitée en sort</text>
+  <text x="360" y="390" font-size="12" fill="#333">→ entraîner avec du bruit capteur</text>
+  <rect x="670" y="308" width="310" height="92" rx="8" fill="#fbecee" stroke="#d1495b"/>
+  <text x="685" y="332" font-size="13" font-weight="bold" fill="#a52a3c">✗ Stabilité</text>
+  <text x="685" y="354" font-size="12" fill="#333">l'information fine est à l'échelle du bruit</text>
+  <text x="685" y="372" font-size="12" fill="#333">sans bruit à l'entraînement, effondrement</text>
+  <text x="685" y="390" font-size="12" fill="#333">→ régulariser (bruit ≈ Tikhonov)</text>
+
+  <text x="500" y="440" font-size="13" text-anchor="middle" fill="#444">Données : 1 000 000 simulations · seulement 2 798 excitations distinctes · découpage par fichier 14 / 3 / 3</text>
+</svg>

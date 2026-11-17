@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1000 500" width="1000" height="500" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+  </defs>
+  <rect width="1000" height="500" fill="#ffffff"/>
+  <text x="20" y="28" font-size="18" font-weight="bold" fill="#222">Architecture retenue : CNN-GRU à sorties physiquement contraintes</text>
+
+  <!-- encodeur -->
+  <rect x="20" y="60" width="150" height="110" rx="8" fill="#fbecee" stroke="#d1495b"/>
+  <text x="95" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#a52a3c">Entrées</text>
+  <text x="95" y="108" font-size="12" text-anchor="middle" fill="#333">480 pas × 3 canaux</text>
+  <text x="95" y="128" font-size="12" text-anchor="middle" fill="#333">T<tspan dy="4" font-size="9">int</tspan><tspan dy="-4">, dT</tspan><tspan dy="4" font-size="9">int</tspan><tspan dy="-4">/dt, U</tspan></text>
+  <text x="95" y="150" font-size="11" text-anchor="middle" fill="#666">standardisées</text>
+
+  <rect x="200" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
+  <text x="287" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">3 convolutions 1D</text>
+  <text x="287" y="108" font-size="12" text-anchor="middle" fill="#333">noyaux 7, 5, 5 (dilaté)</text>
+  <text x="287" y="128" font-size="12" text-anchor="middle" fill="#333">480 → 240 pas, 64 canaux</text>
+  <text x="287" y="150" font-size="11" text-anchor="middle" fill="#666">motifs locaux de 7 à 25 min</text>
+
+  <rect x="405" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
+  <text x="492" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">GRU bidirectionnel</text>
+  <text x="492" y="108" font-size="12" text-anchor="middle" fill="#333">2 couches, 64 par sens</text>
+  <text x="492" y="128" font-size="12" text-anchor="middle" fill="#333">dynamique sur 8 h</text>
+  <text x="492" y="150" font-size="11" text-anchor="middle" fill="#666">forme globale de la réponse</text>
+
+  <rect x="610" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
+  <text x="697" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">Pooling</text>
+  <text x="697" y="108" font-size="12" text-anchor="middle" fill="#333">attention + moyenne</text>
+  <text x="697" y="128" font-size="12" text-anchor="middle" fill="#333">→ 256 valeurs</text>
+  <text x="697" y="150" font-size="11" text-anchor="middle" fill="#666">pondère l'après-allumage</text>
+
+  <rect x="815" y="60" width="165" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
+  <text x="897" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">Couche dense</text>
+  <text x="897" y="108" font-size="12" text-anchor="middle" fill="#333">128, GELU</text>
+  <text x="897" y="128" font-size="12" text-anchor="middle" fill="#333">résumé de l'essai</text>
+
+  <line x1="170" y1="115" x2="196" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="375" y1="115" x2="401" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="580" y1="115" x2="606" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="785" y1="115" x2="811" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- vers les têtes -->
+  <path d="M897,170 L897,205 L530,205 L530,232" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="897" y1="205" x2="897" y2="232" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- tête physique -->
+  <rect x="20" y="236" width="770" height="160" rx="8" fill="#eef6ef" stroke="#3a7d44"/>
+  <text x="405" y="260" font-size="14" text-anchor="middle" font-weight="bold" fill="#2c6135">Tête physique : les contraintes sont garanties par construction</text>
+  <text x="40" y="290" font-size="12" fill="#333">5 paramètres ancrés sur le bâtiment typique :  p = μ + s · a   (a : sortie du réseau ; μ, s : statistiques d'entraînement)</text>
+  <text x="40" y="312" font-size="12" fill="#333">HLC = exp(p<tspan dy="4" font-size="9">1</tspan><tspan dy="-4">),   r = sigmoïde(p</tspan><tspan dy="4" font-size="9">2</tspan><tspan dy="-4">) ∈ ]0, 1[,   τ</tspan><tspan dy="4" font-size="9">n</tspan><tspan dy="-4"> = exp(p</tspan><tspan dy="4" font-size="9">3</tspan><tspan dy="-4">),   δ</tspan><tspan dy="4" font-size="9">1</tspan><tspan dy="-4"> = p</tspan><tspan dy="4" font-size="9">4</tspan><tspan dy="-4">,   δ</tspan><tspan dy="4" font-size="9">2</tspan><tspan dy="-4"> = p</tspan><tspan dy="4" font-size="9">5</tspan></text>
+  <rect x="40" y="326" width="350" height="56" rx="6" fill="#ffffff" stroke="#3a7d44"/>
+  <text x="215" y="349" font-size="13" text-anchor="middle" fill="#222">HLC<tspan dy="4" font-size="10">ext</tspan><tspan dy="-4"> = r · HLC</tspan></text>
+  <text x="215" y="371" font-size="13" text-anchor="middle" fill="#222">HLC<tspan dy="4" font-size="10">mit</tspan><tspan dy="-4"> = (1 − r) · HLC</tspan></text>
+  <rect x="410" y="326" width="360" height="56" rx="6" fill="#ffffff" stroke="#3a7d44"/>
+  <text x="590" y="349" font-size="13" text-anchor="middle" fill="#222">τ<tspan dy="4" font-size="10">∞</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="10">n</tspan><tspan dy="-4"> + exp(δ</tspan><tspan dy="4" font-size="10">1</tspan><tspan dy="-4">)</tspan></text>
+  <text x="590" y="371" font-size="13" text-anchor="middle" fill="#222">τ<tspan dy="4" font-size="10">b</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="10">∞</tspan><tspan dy="-4"> + exp(δ</tspan><tspan dy="4" font-size="10">2</tspan><tspan dy="-4">)</tspan></text>
+
+  <!-- tête d'incertitude -->
+  <rect x="810" y="236" width="170" height="160" rx="8" fill="#fdf5e6" stroke="#d9a441"/>
+  <text x="895" y="260" font-size="14" text-anchor="middle" font-weight="bold" fill="#8a6414">Tête d'incertitude</text>
+  <text x="895" y="292" font-size="12" text-anchor="middle" fill="#333">log σ² pour</text>
+  <text x="895" y="310" font-size="12" text-anchor="middle" fill="#333">les 6 indicateurs</text>
+  <text x="895" y="342" font-size="11" text-anchor="middle" fill="#666">→ intervalles</text>
+  <text x="895" y="358" font-size="11" text-anchor="middle" fill="#666">de confiance</text>
+
+  <!-- perte -->
+  <rect x="20" y="420" width="960" height="44" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
+  <text x="500" y="447" font-size="13" text-anchor="middle" fill="#222">Perte β-NLL gaussienne sur cibles standardisées (log τ) · même poids par famille · 210 000 paramètres</text>
+  <text x="500" y="488" font-size="11" text-anchor="middle" fill="#666">Variantes testées avec la même tête : TCN, TCN-GRU (inspiré des TCN-LSTM pour batteries, BMW Group), FiLM-GRU, MLP</text>
+</svg>
