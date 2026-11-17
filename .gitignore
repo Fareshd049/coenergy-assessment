@@ -16,3 +16,4 @@ artifacts/checkpoints/
 artifacts/runs/*/*.pt
 artifacts/runs/*/*.pt
 artifacts/runs/*/*.pt
+artifacts/cache/

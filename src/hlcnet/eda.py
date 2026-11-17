@@ -7,6 +7,7 @@ orchestrates and comments. Time axis: 1 step = 1 minute (480 steps = 8 h).
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +16,7 @@ import torch
 from matplotlib.figure import Figure
 from torch import Tensor
 
-from hlcnet.data import SimData
+from hlcnet.data import SimData, list_batches, load_batches
 from hlcnet.targets import CDT_IDX, HLC_IDX, TARGET_NAMES, hlc_consistency_gap
 
 DT_MINUTES: float = 1.0
@@ -260,3 +261,121 @@ def conditional_correlation(
             }
         )
     return pd.DataFrame(rows).round(3)
+
+
+# --------------------------------------------------------------------------
+# Full-dataset scan (1 000 000 simulations)
+# --------------------------------------------------------------------------
+#: Excitation parameters that vary across simulations (the others are constant).
+PRBS_PARAMS: tuple[str, ...] = ("prbs_probability_on", "prbs_min_duration_hours")
+
+
+def excitation_hash(u: Tensor) -> Tensor:
+    """64-bit fingerprint of each excitation signal ``u`` of shape ``(N, T)``.
+
+    Signals are compared at the 0.1 W resolution of the data. Two identical
+    signals always get the same hash; two different ones collide with
+    probability about ``2**-60``, negligible for a million signals.
+    """
+    q = torch.round(u.double() * 10.0).to(torch.int64)
+    mask, base, p, w = (1 << 64) - 1, 1_000_003, 1, []
+    for _ in range(q.shape[1]):
+        w.append(p - (1 << 64) if p >= 1 << 63 else p)  # signed int64
+        p = (p * base) & mask
+    return (q * torch.tensor(w, dtype=torch.int64)).sum(dim=1)  # wraps modulo 2**64
+
+
+def scan_dataset(folder: Path, cache: Path | None = None) -> pd.DataFrame:
+    """One row per simulation of the whole dataset, read one file at a time.
+
+    Columns: the 6 targets, the 2 varying PRBS parameters, the excitation
+    features of :func:`excitation_features`, the response summary (``t0``,
+    ``rise`` = Tint(8 h) - Tint(0), ``rise_max``), ``u_min``/``u_max``,
+    ``has_nan``, the excitation fingerprint ``exc_hash`` and the file index
+    ``batch``. Inputs are rounded as in coEnergy's loading example.
+
+    Args:
+        folder: Folder containing the 20 batch files.
+        cache: Optional pickle file: read if it exists, written otherwise.
+    """
+    if cache is not None and Path(cache).exists():
+        return pd.read_pickle(cache)
+    parts = []
+    for i in range(len(list_batches(folder))):
+        d = load_batches(folder, batch_ids=[i])
+        temp, u = d.x[..., 0], d.x[..., 1]
+        cols: dict[str, Tensor] = {n: d.y[:, j] for j, n in enumerate(TARGET_NAMES)}
+        for name in PRBS_PARAMS:
+            cols[name] = d.meta[:, d.meta_names.index(name)]
+        cols.update(excitation_features(u))
+        cols["t0"] = temp[:, 0]
+        cols["rise"] = temp[:, -1] - temp[:, 0]
+        cols["rise_max"] = temp.max(dim=1).values - temp[:, 0]
+        cols["u_min"], cols["u_max"] = u.min(dim=1).values, u.max(dim=1).values
+        cols["has_nan"] = d.x.isnan().any(dim=(1, 2)) | d.y.isnan().any(dim=1)
+        cols["exc_hash"] = excitation_hash(u)
+        cols["batch"] = d.batch_id
+        parts.append(pd.DataFrame({k: v.numpy() for k, v in cols.items()}))
+        del d, temp, u
+    scan = pd.concat(parts, ignore_index=True)
+    if cache is not None:
+        Path(cache).parent.mkdir(parents=True, exist_ok=True)
+        scan.to_pickle(cache)
+    return scan
+
+
+def scan_targets(scan: pd.DataFrame) -> Tensor:
+    """``(N, 6)`` target tensor of a :func:`scan_dataset` table."""
+    return torch.from_numpy(
+        scan[list(TARGET_NAMES)].to_numpy(dtype=np.float32, copy=True)
+    )
+
+
+def scan_features(scan: pd.DataFrame) -> dict[str, Tensor]:
+    """Excitation features of a :func:`scan_dataset` table, as tensors."""
+    keys = ("duty", "energy_kwh", "n_switch", "never_on", "first_on_h")
+    return {k: torch.from_numpy(scan[k].to_numpy(copy=True)) for k in keys}
+
+
+def full_consistency_checks(scan: pd.DataFrame) -> pd.Series:
+    """Physical and data-quality checks on every simulation of the dataset."""
+    gap = (scan["HLC"] - scan["HLC_ext"] - scan["HLC_mit"]).abs()
+    ordered = (scan["tau_b"] >= scan["tau_inf"]) & (scan["tau_inf"] >= scan["tau_n"])
+    return pd.Series(
+        {
+            "simulations": len(scan),
+            "simulations avec NaN": int(scan["has_nan"].sum()),
+            "max |HLC - (ext + mit)| (W/K)": float(gap.max()),
+            "part tau_b >= tau_inf >= tau_n": float(ordered.mean()),
+            "Tint(t=0) min / max (°C)": f"{scan['t0'].min():.2f} / {scan['t0'].max():.2f}",
+            "U min / max (W)": f"{scan['u_min'].min():.1f} / {scan['u_max'].max():.1f}",
+            "HLC min / max (W/K)": f"{scan['HLC'].min():.0f} / {scan['HLC'].max():.0f}",
+            "part sans chauffe": float(scan["never_on"].mean()),
+        },
+        dtype=object,
+    )
+
+
+def sample_vs_population(scan: pd.DataFrame, sample: SimData) -> pd.DataFrame:
+    """Is the EDA sample representative? Means, std and a two-sample KS test.
+
+    Compares the sample used for curve-level analyses with all simulations,
+    on the targets and on two excitation features.
+    """
+    from scipy.stats import ks_2samp
+
+    feats = excitation_features(sample.x[..., 1])
+    sample_cols = {n: sample.y[:, j].numpy() for j, n in enumerate(TARGET_NAMES)}
+    sample_cols.update({k: feats[k].numpy() for k in ("energy_kwh", "duty")})
+    rows = {}
+    for name, v in sample_cols.items():
+        pop = scan[name].to_numpy()
+        ks = ks_2samp(v, pop)
+        rows[name] = {
+            "moyenne (1 M)": pop.mean(),
+            "moyenne (échantillon)": v.mean(),
+            "écart-type (1 M)": pop.std(),
+            "écart-type (échantillon)": v.std(),
+            "KS p-value": ks.pvalue,
+        }
+    return pd.DataFrame(rows).T

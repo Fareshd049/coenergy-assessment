@@ -108,6 +108,7 @@ def bias_corrected_r2(eval_dir: Path) -> pd.DataFrame:
     for t in bias.index:
         rows[t] = {
             "R² médiane exp(mu)": 1.0 - (bias.loc[t, "rmse médiane"] / std[t]) ** 2,
-            "R² moyenne exp(mu + s²/2)": 1.0 - (bias.loc[t, "rmse moyenne"] / std[t]) ** 2,
+            "R² moyenne exp(mu + s²/2)": 1.0
+            - (bias.loc[t, "rmse moyenne"] / std[t]) ** 2,
         }
     return pd.DataFrame(rows).T

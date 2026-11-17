@@ -13,6 +13,11 @@ Three complementary, model-free analyses used in section 3.6 of the report:
    neural model must beat.
 3. **PCA of the responses.** Effective dimension of the temperature curves and
    which components relate to which indicator.
+
+Section 3.7 adds the ill-posedness diagnostics: the share of the dataset's
+excitations that are shared between splits, and nearest-neighbour "twins"
+(near-identical curves, different buildings) with the Delta test, a lower
+estimate of the best achievable R².
 """
 
 from __future__ import annotations
@@ -25,8 +30,10 @@ import numpy as np
 import pandas as pd
 import torch
 from matplotlib.figure import Figure
+from matplotlib.ticker import FormatStrFormatter, LogLocator, NullFormatter
 from torch import Tensor
 
+from hlcnet.data import SplitSpec
 from hlcnet.eda import DT_MINUTES, excitation_features
 from hlcnet.targets import HLC_IDX, TARGET_NAMES
 
@@ -76,6 +83,55 @@ def excitation_groups_table(
             }
         )
     return pd.DataFrame(rows)
+
+
+def pick_groups(
+    groups_tbl: pd.DataFrame, sizes: Tensor, min_size: int = 30
+) -> dict[str, int]:
+    """Largest group of each kind (never heated, continuous heating, PRBS).
+
+    Groups smaller than ``min_size`` are dropped: correlations and regressions
+    need enough buildings.
+    """
+    labels = {
+        "jamais chauffé": "Jamais chauffé",
+        "chauffe continue": "Chauffe continue (réponse indicielle)",
+        "PRBS": "PRBS le plus fréquent",
+    }
+    chosen = {}
+    for kind, label in labels.items():
+        rows = groups_tbl[groups_tbl["type"] == kind]
+        if len(rows) and int(sizes[int(rows["groupe"].iloc[0])]) >= min_size:
+            chosen[label] = int(rows["groupe"].iloc[0])
+    return chosen
+
+
+def excitation_coverage(scan: pd.DataFrame, split: SplitSpec) -> pd.DataFrame:
+    """How many distinct excitations each split has, and how many it shares with train.
+
+    Args:
+        scan: Table of :func:`hlcnet.eda.scan_dataset` (``exc_hash``, ``batch``).
+        split: File assignment to train / val / test.
+    """
+    sets = {"train": split.train, "val": split.val, "test": split.test}
+    train_hashes = set(scan.loc[scan["batch"].isin(split.train), "exc_hash"])
+    rows = {}
+    for name, ids in sets.items():
+        h = scan.loc[scan["batch"].isin(ids), "exc_hash"]
+        seen = h.isin(train_hashes)
+        rows[name] = {
+            "simulations": len(h),
+            "excitations distinctes": h.nunique(),
+            "simulations dont l'excitation existe en train (%)": 100.0 * seen.mean(),
+            "excitations absentes du train": h[~seen].nunique(),
+        }
+    rows["total"] = {
+        "simulations": len(scan),
+        "excitations distinctes": scan["exc_hash"].nunique(),
+        "simulations dont l'excitation existe en train (%)": float("nan"),
+        "excitations absentes du train": float("nan"),
+    }
+    return pd.DataFrame(rows).T
 
 
 def information_timeline(temp: Tensor, y: Tensor) -> pd.DataFrame:
@@ -323,5 +379,158 @@ def plot_pca(res: PCAResult, y: Tensor, title: str, n_corr: int = 6) -> Figure:
             )
     axes[2].set_title("|corrélation| composantes / indicateurs", fontsize=10)
     fig.colorbar(im, ax=axes[2], shrink=0.8)
+    fig.tight_layout()
+    return fig
+
+
+# --------------------------------------------------------------------------
+# 4. Ill-posedness: nearest-neighbour twins and the Delta test
+# --------------------------------------------------------------------------
+def nearest_neighbours(
+    curves: Tensor, k: int = 1, chunk: int = 1024
+) -> tuple[Tensor, Tensor]:
+    """RMS distance (same unit as ``curves``) to the ``k`` nearest other curves.
+
+    Computed in float64 on centered curves, so that near-identical curves get
+    an accurate distance (the float32 ``|a|² + |b|² - 2ab`` trick loses about
+    0.1 °C of precision on 480-step temperature curves).
+
+    Args:
+        curves: ``(n, T)`` curves, ``n >= 2``.
+        k: Number of neighbours.
+        chunk: Rows processed at once (memory ``chunk x n``).
+
+    Returns:
+        ``dist`` ``(n, k)`` sorted increasingly and ``idx`` ``(n, k)``.
+    """
+    n, t = curves.shape
+    if n < 2:
+        raise ValueError("need at least two curves")
+    k = min(k, n - 1)
+    c = curves.double() - curves.double().mean(dim=0)
+    sq = (c * c).sum(dim=1)
+    dists, idxs = [], []
+    for a in range(0, n, chunk):
+        b = min(a + chunk, n)
+        d2 = (sq[a:b, None] + sq[None, :] - 2.0 * c[a:b] @ c.T).clamp_min(0.0)
+        rows = torch.arange(a, b)
+        d2[rows - a, rows] = float("inf")  # exclude the curve itself
+        val, ind = torch.topk(d2, k, dim=1, largest=False)
+        dists.append((val / t).sqrt())
+        idxs.append(ind)
+    return torch.cat(dists).float(), torch.cat(idxs)
+
+
+def delta_test_r2(y: Tensor, nn: Tensor) -> Tensor:
+    """Share of variance explained by curve resemblance alone (Delta test).
+
+    If a curve and its nearest neighbour were the same input,
+    ``E[(y_i - y_nn(i))²] = 2 Var(y | x)`` (Pi & Peterson, 1994), so
+    ``1 - mean((y_i - y_nn)²) / (2 Var(y))`` would estimate the best achievable
+    R². Neighbours are chosen by overall (Euclidean) resemblance, which ignores
+    low-variance shape details: a model exploiting those details can do better,
+    so the value is a lower estimate.
+    """
+    y64 = y.double()
+    noise_var = (y64 - y64[nn]).pow(2).mean(dim=0) / 2.0
+    return (1.0 - noise_var / y64.var(dim=0, correction=0)).float()
+
+
+def ill_posedness_table(
+    groups: Mapping[str, tuple[Tensor, Tensor]], threshold: float = 0.05, seed: int = 0
+) -> pd.DataFrame:
+    """Twins and Delta-test R² for each excitation group.
+
+    Args:
+        groups: ``name -> (curves (n, T), targets (n, 6))``, one excitation each.
+        threshold: Distance (°C RMS) below which two curves are called twins,
+            e.g. the sensor noise level.
+        seed: Seed of the random pairs used as a reference.
+    """
+    hlc = HLC_IDX
+    rows = {}
+    for name, (curves, y) in groups.items():
+        dist, idx = nearest_neighbours(curves, k=1)
+        d, nn = dist[:, 0], idx[:, 0]
+        twins = d < threshold
+        dy = (y[:, hlc] - y[nn, hlc]).abs()
+        g = torch.Generator().manual_seed(seed)
+        perm = torch.randperm(len(y), generator=g)
+        partner = torch.empty_like(perm)
+        partner[perm] = perm.roll(1)
+        r2 = delta_test_r2(y, nn)
+        rows[name] = {
+            "n": len(y),
+            "distance au plus proche voisin, médiane (°C)": d.median().item(),
+            f"part de maisons ayant une jumelle < {threshold} °C (%)": 100.0
+            * twins.float().mean().item(),
+            "|ΔHLC| médian entre jumelles (W/K)": dy[twins].median().item()
+            if twins.any()
+            else float("nan"),
+            "|ΔHLC| médian entre maisons au hasard (W/K)": (y[:, hlc] - y[partner, hlc])
+            .abs()
+            .median()
+            .item(),
+            **{
+                f"R² test Delta {TARGET_NAMES[j]}": r2[j].item()
+                for j in range(len(TARGET_NAMES))
+            },
+        }
+    return pd.DataFrame(rows).T
+
+
+def plot_twins(
+    curves: Tensor, y: Tensor, title: str, threshold: float = 0.05
+) -> Figure:
+    """Nearest-neighbour distance vs HLC gap, and the most striking pair of twins.
+
+    Left: one point per building, RMS distance to its most similar curve
+    versus the HLC difference. Middle and right: among pairs closer than
+    ``threshold``, the one with the largest HLC gap, and the difference
+    between its two curves.
+    """
+    dist, idx = nearest_neighbours(curves, k=1)
+    d, nn = dist[:, 0], idx[:, 0]
+    dy = (y[:, HLC_IDX] - y[nn, HLC_IDX]).abs()
+    hours = np.arange(curves.shape[1]) * DT_MINUTES / 60.0
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4))
+
+    axes[0].scatter(d.clamp_min(1e-3).numpy(), dy.numpy(), s=4, alpha=0.4)
+    axes[0].set_xscale("log")
+    axes[0].xaxis.set_major_locator(LogLocator(subs=(1.0, 2.0, 5.0)))
+    axes[0].xaxis.set_major_formatter(FormatStrFormatter("%g"))
+    axes[0].xaxis.set_minor_formatter(NullFormatter())
+    axes[0].axvline(threshold, color="tab:red", ls="--", lw=1, label=f"{threshold} °C")
+    axes[0].set_xlabel("distance au plus proche voisin (°C RMS, log)")
+    axes[0].set_ylabel("|ΔHLC| avec ce voisin (W/K)")
+    axes[0].legend(fontsize=8)
+
+    close = d < threshold
+    pool = torch.nonzero(close).squeeze(1) if close.any() else torch.argsort(d)[:1]
+    i = int(pool[torch.argmax(dy[pool])])
+    j = int(nn[i])
+    for k, color in ((i, "tab:blue"), (j, "tab:orange")):
+        axes[1].plot(
+            hours,
+            curves[k].numpy(),
+            color=color,
+            lw=1.2,
+            label=f"HLC = {y[k, HLC_IDX]:.0f} W/K",
+        )
+    axes[1].set_title(
+        f"distance RMS {d[i]:.3f} °C, |ΔHLC| = {dy[i]:.0f} W/K", fontsize=9
+    )
+    axes[1].set_xlabel("temps (h)")
+    axes[1].set_ylabel("Tint (°C)")
+    axes[1].legend(fontsize=8)
+
+    axes[2].plot(hours, (curves[i] - curves[j]).numpy(), color="k", lw=1)
+    axes[2].axhspan(
+        -threshold, threshold, color="tab:red", alpha=0.15, label=f"± {threshold} °C"
+    )
+    axes[2].set_xlabel("temps (h)")
+    axes[2].set_ylabel("écart entre les deux courbes (°C)")
+    axes[2].legend(fontsize=8)
+    fig.suptitle(title, fontsize=10)
     fig.tight_layout()
     return fig

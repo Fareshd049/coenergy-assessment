@@ -38,10 +38,10 @@ uv run ruff check .      # style
 ## Lire le rapport
 
 ```bash
-uv run --with jupyter jupyter lab notebooks/report.ipynb
+uv run jupyter lab notebooks/report.ipynb
 ```
 
-Le notebook **ne ré-entraîne rien**. Les sections 1 à 4 chargent un échantillon des données ; les sections 5 à 8 relisent les résultats enregistrés dans `artifacts/` :
+Le notebook **ne ré-entraîne rien**. La section 2 parcourt le million de simulations fichier par fichier (quelques minutes au premier passage, puis cache dans `artifacts/cache/`, non versionné) ; les analyses de courbes utilisent un échantillon de 50 000 simulations ; les sections 5 à 8 relisent les résultats enregistrés dans `artifacts/` :
 - les métriques de chaque entraînement : `artifacts/runs/<nom>/val_metrics.json` ;
 - les tableaux et figures des évaluations : `artifacts/eval*/`.
 

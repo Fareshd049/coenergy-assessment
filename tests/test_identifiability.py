@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import torch
 
 from hlcnet.identifiability import (
@@ -65,3 +66,44 @@ def test_pca_explained_variance() -> None:
     res = pca(curves, k=5)
     assert res.explained[0] > 0.95
     assert res.scores.shape == (300, 5)
+
+
+def test_nearest_neighbours_exact_rms_distance() -> None:
+    from hlcnet.identifiability import nearest_neighbours
+
+    base = torch.linspace(20.0, 30.0, 480)
+    curves = torch.stack([base, base + 0.01, base + 1.0, base + 1.5])
+    dist, idx = nearest_neighbours(curves, k=1, chunk=3)
+    assert idx[:, 0].tolist() == [1, 0, 3, 2]
+    assert dist[0, 0].item() == pytest.approx(0.01, abs=1e-4)
+    assert dist[2, 0].item() == pytest.approx(0.5, abs=1e-4)
+
+
+def test_delta_test_recovers_noise_level() -> None:
+    from hlcnet.identifiability import delta_test_r2, nearest_neighbours
+
+    g = torch.Generator().manual_seed(0)
+    n = 4000
+    s = torch.rand(n, generator=g)  # hidden 1-D parameter seen through the curve
+    curves = s[:, None] * torch.linspace(0, 1, 50)[None, :]
+    signal = 3.0 * s
+    noise = torch.randn(n, generator=g) * 0.5  # part of y invisible in the curve
+    y = torch.stack([signal + noise] * len(TARGET_NAMES), dim=1)
+    _, idx = nearest_neighbours(curves)
+    expected = signal.var() / (signal.var() + 0.25)
+    assert delta_test_r2(y, idx[:, 0])[0].item() == pytest.approx(
+        expected.item(), abs=0.05
+    )
+
+
+def test_ill_posedness_table_counts_twins() -> None:
+    from hlcnet.identifiability import ill_posedness_table
+
+    base = torch.linspace(20.0, 30.0, 100)
+    curves = torch.stack([base, base + 0.001, base + 1.0, base + 2.0])
+    y = torch.tensor([[100.0] * 6, [300.0] * 6, [200.0] * 6, [250.0] * 6])
+    table = ill_posedness_table({"g": (curves, y)}, threshold=0.05)
+    assert table.loc[
+        "g", "part de maisons ayant une jumelle < 0.05 °C (%)"
+    ] == pytest.approx(50.0)
+    assert table.loc["g", "|ΔHLC| médian entre jumelles (W/K)"] == pytest.approx(200.0)
