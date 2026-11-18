@@ -1,32 +1,57 @@
-# coEnergy — prédiction multi-indicateurs de la performance thermique d'un bâtiment
+# Prédire la performance thermique d'un bâtiment à partir d'un essai de 8 h
 
 *Assessment de stage coEnergy — Fares EL HAMDAOUI — novembre 2026*
 
-À partir de 8 h de mesures à la minute de la température intérieure $T_{int}(t)$ et du chauffage $U(t)$, un modèle PyTorch (CNN-GRU) prédit six indicateurs d'un bâtiment, `[HLC, HLC_ext, HLC_mit, tau_b, tau_n, tau_inf]`, avec un intervalle de confiance calibré pour chacun. Les relations physiques ($\mathrm{HLC} = \mathrm{HLC}_{ext} + \mathrm{HLC}_{mit}$, positivité, $\tau_n \le \tau_\infty \le \tau_b$) sont garanties par construction.
+![Python](https://img.shields.io/badge/python-3.13-3776ab) ![PyTorch](https://img.shields.io/badge/PyTorch-CNN--GRU-ee4c2c) ![uv](https://img.shields.io/badge/environnement-uv-6340ac) ![tests](https://img.shields.io/badge/tests-79%20pass%C3%A9s-2ea44f) ![ruff](https://img.shields.io/badge/style-ruff-261230)
 
-## Par où commencer
+À partir de 8 h de mesures à la minute de la température intérieure $T_{int}(t)$ et du chauffage $U(t)$, un réseau CNN-GRU prédit six indicateurs d'un bâtiment, `[HLC, HLC_ext, HLC_mit, tau_b, tau_n, tau_inf]`, chacun avec un intervalle de confiance calibré. Les relations physiques ($\mathrm{HLC} = \mathrm{HLC}_{ext} + \mathrm{HLC}_{mit}$, $0 < \tau_n \le \tau_\infty \le \tau_b$) sont **garanties par construction**.
 
-| Pour… | Ouvrir | Installation |
-|---|---|---|
-| lire le rapport complet (démarche, EDA, choix, résultats, analyse critique) | [`notebooks/report.html`](notebooks/report.html) dans un navigateur | aucune |
-| ré-exécuter le rapport | [`notebooks/report.ipynb`](notebooks/report.ipynb) | `uv sync` + données |
-| inspecter le code | [`src/hlcnet/`](src/hlcnet/), dont [`models.py`](src/hlcnet/models.py) pour l'architecture | — |
-| utiliser le modèle entraîné | [`artifacts/runs/final_700k_noise005/model.pt`](artifacts/runs/final_700k_noise005/) | `uv sync` |
+![Le problème physique](docs/figures/probleme_physique.png)
 
-## Résultats sur le jeu de test
+**Lire le rapport complet :** [`notebooks/report.html`](notebooks/report.html) (à télécharger puis ouvrir dans un navigateur, sans installation) ou [`notebooks/report.ipynb`](notebooks/report.ipynb).
 
-Modèle `final_700k_noise005`, évalué une seule fois sur 30 000 simulations jamais vues pendant l'entraînement ni la sélection du modèle.
+## En bref
 
-| Indicateur | $R^2$ | Erreur relative moyenne | P95 de l'erreur absolue | Couverture de l'intervalle à 95 % |
-|---|---|---|---|---|
-| HLC | 0,39 | 8,5 % | 48 W/K | 95,7 % |
-| HLC_ext | 0,32 | 10,3 % | 27 W/K | 96,2 % |
-| HLC_mit | 0,26 | 15,9 % | 44 W/K | 95,7 % |
-| tau_b | 0,08 | 15,3 % | 19 h | 95,4 % |
-| tau_n | 0,22 | 12,5 % | 3,4 h | 95,6 % |
-| tau_inf | 0,06 | 18,3 % | 14 h | 95,3 % |
+- **8,5 %** d'erreur relative moyenne sur le HLC en test, 95 % des erreurs sous 48 W/K.
+- **Des intervalles calibrés** : l'intervalle à 95 % contient la vraie valeur dans 95,7 % des cas, et cela tient de 10 % à 99 %.
+- **0 % de violation** de $\mathrm{HLC} = \mathrm{HLC}_{ext} + \mathrm{HLC}_{mit}$, contre 97,5 % pour une tête de sortie libre, sans perte de précision.
+- **Robuste au bruit capteur** : $R^2$ du HLC de 0,39 sans bruit, 0,37 à 0,05 °C et 0,33 à 0,10 °C (deux fois le bruit vu à l'entraînement), avec des intervalles qui restent calibrés.
+- **Validation = test** ($R^2$ de 0,391 sur les deux) : aucun surapprentissage des choix de modélisation.
+- **L'excitation est le vrai levier** : en imposer une informative porte le $R^2$ du HLC de 0,39 à 0,48, et le modèle sait lui-même classer les excitations par leur informativité.
 
-Aucun levier côté modèle ou données (architectures, ×5 données, mesures parfaites, ensemble, modèles spécialistes) ne gagne plus de 0,02 de $R^2$ sur le HLC : le problème inverse est mal posé, et la limite vient de l'essai lui-même. Le seul levier efficace est l'excitation : en imposer une informative porte le $R^2$ du HLC de 0,39 à 0,48 (sections 3.7, 6.6 et 7.4 du rapport).
+## Pourquoi un $R^2$ d'environ 0,4 est un résultat solide ici
+
+![Un problème inverse mal posé](docs/figures/probleme_inverse.png)
+
+Le problème inverse est **mal posé** : des bâtiments très différents produisent la même courbe en 8 h (ci-dessus, deux maisons à 164 et 322 W/K dont les courbes ne s'écartent jamais de plus de 0,06 °C), parce que l'état initial des parois est inconnu et que capacité et déperdition se compensent. Une partie de la variance du HLC est donc inaccessible à **tout** modèle. Quatre constats le confirment :
+
+| Constat | Résultat |
+|---|---|
+| Les références font toutes moins bien | ridge 0,26 · MLP 0,30 · ROCKET 0,34 · **CNN-GRU 0,41** ($R^2$ HLC, validation) |
+| Cinq architectures très différentes convergent | CNN-GRU, TCN, FiLM-GRU, TCN-GRU à 0,01 près |
+| Aucun levier côté modèle ou données ne dépasse +0,02 | ×5 données +0,003 · mesures parfaites +0,02 · ensemble +0,009 · spécialistes ≈ 0 |
+| Seul l'essai lui-même déplace le plafond | excitation informative : **0,39 → 0,48** sans ré-entraînement |
+
+## Résultats par indicateur
+
+Modèle final `final_700k_noise005`. La validation a servi aux choix ; le test (30 000 simulations) n'a été évalué qu'une seule fois, à la fin.
+
+| Indicateur | $R^2$ validation | $R^2$ test | Erreur relative (test) | P95 erreur absolue (test) | Couverture à 95 % (test) |
+|---|---|---|---|---|---|
+| HLC | 0,391 | 0,391 | 8,5 % | 48 W/K | 95,7 % |
+| HLC_ext | 0,319 | 0,322 | 10,3 % | 27 W/K | 96,2 % |
+| HLC_mit | 0,250 | 0,256 | 15,9 % | 44 W/K | 95,7 % |
+| tau_n | 0,216 | 0,217 | 12,5 % | 3,4 h | 95,6 % |
+| tau_b | 0,069 | 0,075 | 15,3 % | 19 h | 95,4 % |
+| tau_inf | 0,051 | 0,057 | 18,3 % | 14 h | 95,3 % |
+
+Comme prévu par la physique : $\tau_n$, définie sur 8 h comme l'essai, est la constante de temps la mieux prédite ; $\tau_b$ et $\tau_\infty$, qui font intervenir des modes lents de plusieurs dizaines d'heures, sont à peine identifiables en 8 h.
+
+## Le modèle
+
+![Architecture](docs/figures/architecture.png)
+
+Chaque bloc répond à un constat de l'analyse exploratoire (section 5 du rapport) : les convolutions captent les réactions juste après chaque commutation, le GRU bidirectionnel la forme globale sur 8 h, l'attention les instants informatifs. La tête physique garantit les contraintes, et la tête d'incertitude prédit une variance par indicateur (vraisemblance gaussienne $\beta$-NLL). L'encodeur TCN a été transposé des modèles d'état de santé de batteries de BMW Group ([`docs/figures/analogie_batterie.png`](docs/figures/analogie_batterie.png), section 5.6).
 
 ## Installation
 
