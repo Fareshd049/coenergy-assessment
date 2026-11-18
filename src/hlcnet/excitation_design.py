@@ -111,7 +111,7 @@ def excitation_descriptors(signals: Mapping[int, np.ndarray]) -> pd.DataFrame:
 
 def join_splits(val: pd.DataFrame, test: pd.DataFrame) -> pd.DataFrame:
     """Excitations present in both splits, columns suffixed ``_val`` / ``_test``."""
-    return val.join(test, lsuffix="_val", rsuffix="_test", how="inner")
+    return val.add_suffix("_val").join(test.add_suffix("_test"), how="inner")
 
 
 def ranking_summary(merged: pd.DataFrame, name: str) -> pd.Series:
