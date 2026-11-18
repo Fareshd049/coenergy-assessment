@@ -8,7 +8,7 @@
 
 > [!IMPORTANT]
 > ### Lire le rapport complet
-> - **En un clic, dans le navigateur** : [version HTML](https://htmlpreview.github.io/?https://github.com/Fareshd049/coenergy-assessment/blob/main/notebooks/report.html) · [version notebook (nbviewer)](https://nbviewer.org/github/Fareshd049/coenergy-assessment/blob/main/notebooks/report.ipynb)
+> - **En un clic, dans le navigateur** : [rapport exécuté, avec figures et formules (nbviewer)](https://nbviewer.org/github/Fareshd049/coenergy-assessment/blob/main/notebooks/report.ipynb)
 > - **Dans le dépôt** : [`notebooks/report.html`](notebooks/report.html) (à télécharger puis ouvrir, sans installation) · [`notebooks/report.ipynb`](notebooks/report.ipynb) (exécutable)
 
 ![Le problème physique](docs/figures/probleme_physique.png)
