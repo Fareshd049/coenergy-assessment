@@ -1,0 +1,9 @@
+,HLC,HLC_ext
+excitations comparées,489.0,489.0
+Spearman RMSE validation / RMSE test,0.16281570256584987,0.43878804180738495
+Spearman sigma prédit (validation) / RMSE test,0.4382606366493093,0.6477639547400788
+RMSE test médian sur les excitations,23.9196834564209,13.964812278747559
+"RMSE test, meilleure excitation selon l'erreur de validation",22.952367782592773,12.841937065124512
+"RMSE test, meilleure excitation selon le sigma prédit",22.746854782104492,11.049646377563477
+"RMSE test, pire excitation selon le sigma prédit",26.556943893432617,14.89743709564209
+"RMSE test, toutes simulations (référence)",24.400676727294922,14.048076629638672

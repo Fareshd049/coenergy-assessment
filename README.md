@@ -67,6 +67,9 @@ uv run python scripts/evaluate.py --runs artifacts/runs/final_700k_noise005 --sp
 # Vérifications du plafond (section 6.6)
 uv run python scripts/ensemble_eval.py --data-folder data/quentin_house
 uv run python scripts/specialist_eval.py --data-folder data/quentin_house
+
+# Évaluation excitation par excitation (section 7.4 b, environ 10 minutes sur CPU)
+uv run python scripts/excitation_eval.py --data-folder data/quentin_house
 ```
 
 `notebooks/kaggle_train.ipynb` enchaîne ces entraînements sur Kaggle. Les listes d'expériences sont en tête du notebook ; il clone le dépôt avec un jeton stocké dans les *secrets* Kaggle.
@@ -90,6 +93,7 @@ src/hlcnet/            package Python, typé et documenté
   metrics.py           métriques par indicateur et par famille, contraintes, couverture
   analysis.py          calibration, biais log-normal, bruit, sous-groupes, cartes d'excitation, ensembles
   specialist.py        modèles spécialistes par excitation (section 6.6 c)
+  excitation_design.py évaluation excitation par excitation, critère du σ prédit (section 7.4 b)
   rocket.py            référence ROCKET (noyaux aléatoires)
   report.py            lecture des résultats enregistrés pour le notebook
   config.py, utils.py  configuration YAML, graines, périphérique
