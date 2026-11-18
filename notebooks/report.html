@@ -7820,7 +7820,7 @@ a.anchor-link {
 <li><strong>Une incertitude utilisable</strong> : intervalles calibrés de 10 % à 99 %, biais log-normal corrigé, robustesse au bruit (<a href="#s64">6.4</a>, <a href="#s65">6.5</a>).</li>
 <li><strong>Un transfert depuis l'automobile</strong> : le problème a la même structure que l'estimation de l'état de santé des batteries chez BMW Group ; j'en ai transposé l'encodeur et le principe de sortie contrainte, et je montre ce qui se transfère et ce qui ne se transfère pas (<a href="#s56">5.6</a>).</li>
 <li><strong>Un plafond vérifié, pas supposé</strong> : cinq leviers, dont des modèles spécialistes à la manière de l'article (<a href="#s66">6.6</a>).</li>
-<li><strong>Un critère de choix de l'excitation sans vérité terrain</strong> : l'incertitude prédite par le modèle classe les excitations mieux que l'erreur mesurée, et désigne un créneau d'une heure après 5 h d'évolution libre, aussi précis que la chauffe continue pour sept fois moins d'énergie (<a href="#s74">7.4</a>).</li>
+<li><strong>Un critère de choix de l'excitation sans vérité terrain</strong> : l'incertitude prédite par le modèle classe les excitations mieux que l'erreur mesurée. Imposer une excitation informative porte le $R^2$ du HLC de 0,39 à 0,48 sans ré-entraînement, et un modèle spécialisé sur cette excitation ne fait pas mieux (<a href="#s74">7.4</a>).</li>
 </ol>
 <p><strong>Plan</strong></p>
 <ol>
@@ -11579,7 +11579,7 @@ C'est l'analogue des moindres carrés généralisés réalisables (FGLS), avec d
 <p><strong>Lecture.</strong></p>
 <ul>
 <li><strong>Le généraliste égale les spécialistes</strong> : sans chauffe, 0,241 contre 0,249 sur le HLC ; en chauffe continue, 0,486 contre 0,478. L'écart est de ±0,01, alors que les spécialistes disposent de 53 000 et 5 500 exemples de la même excitation.</li>
-<li><strong>L'information dépend de l'excitation</strong> : même modèle, $R^2 \approx 0{,}49$ en réponse indicielle, ≈ 0,24 en évolution libre, au-dessus du $R^2_\Delta$ de 3.7 (0,40 et 0,11).</li>
+<li><strong>L'information dépend de l'excitation</strong> : même modèle, $R^2 \approx 0{,}49$ en réponse indicielle, ≈ 0,24 en évolution libre, au-dessus du $R^2_\Delta$ de 3.7 (0,40 et 0,11). La chauffe continue fait d'ailleurs partie des excitations que le modèle juge les plus informatives sur le HLC (7.4 b) ; la section 7.4 c refait cette comparaison avec un CNN-GRU spécialiste, avec la même conclusion.</li>
 <li>Un seul modèle généraliste pourrait donc remplacer le ré-entraînement par essai, si l'excitation et la météo de l'essai sont couvertes par les simulations.</li>
 </ul>
 <table>
@@ -12694,10 +12694,172 @@ C'est l'analogue des moindres carrés généralisés réalisables (FGLS), avec d
 <li><strong>Mesurée sur une centaine de maisons, l'erreur d'une excitation est trop bruitée pour la classer.</strong> Le classement par RMSE de validation se retrouve à peine en test : Spearman 0,16 sur le HLC, 0,44 sur $\mathrm{HLC}_{ext}$. Avec une centaine de maisons, l'incertitude sur une RMSE (≈ 1,7 W/K) est du même ordre que les écarts entre excitations.</li>
 <li><strong>L'incertitude prédite par le modèle classe mieux que l'erreur mesurée</strong> : Spearman 0,44 sur le HLC et 0,65 sur $\mathrm{HLC}_{ext}$ avec la RMSE de test. Elle ne dépend pas des vraies valeurs, donc elle est beaucoup moins bruitée. Elle reste calibrée excitation par excitation : couverture à 95 % entre 93 et 98 % pour les dix excitations extrêmes du tableau.</li>
 <li><strong>Choisir avec le σ prédit</strong> donne, en test, 22,7 W/K sur le HLC et 11,1 W/K sur $\mathrm{HLC}_{ext}$, contre 24,4 et 14,0 W/K sur l'ensemble des simulations (−7 % et −21 %). Choisir sur l'erreur de validation fait moins bien (23,0 et 12,8 W/K).</li>
-<li><strong>Ce que le modèle recommande.</strong> Les pires excitations sont l'absence de chauffe et un allumage dans les dernières minutes (σ ≈ 29 W/K). Les meilleures sont la chauffe continue (56 kWh), mais aussi <strong>un seul créneau d'environ une heure après 4,5 à 5 h d'évolution libre</strong>, pour 8 à 9 kWh seulement, avec une erreur équivalente (21,6 et 22,5 W/K en test, sur une centaine de maisons). C'est l'enchaînement « évolution libre puis chauffe » suggéré en 7.3, pour environ sept fois moins d'énergie que la chauffe continue.</li>
+<li><strong>Ce que le modèle recommande.</strong> Les pires excitations sont l'absence de chauffe et un allumage dans les dernières minutes (σ ≈ 29 W/K). Les meilleures sont la chauffe continue (56 kWh), mais aussi <strong>un seul créneau d'environ une heure après 4,5 à 5 h d'évolution libre</strong>, pour 8 à 9 kWh seulement, avec une erreur équivalente (21,6 et 22,5 W/K en test, sur une centaine de maisons) : ces excitations sont statistiquement à égalité. C'est l'enchaînement « évolution libre puis chauffe » suggéré en 7.3, pour environ sept fois moins d'énergie que la chauffe continue.</li>
 <li><strong>Portée.</strong> À l'intérieur de la famille PRBS simulée, l'excitation ne déplace l'erreur sur le HLC que d'environ 25 % (22 à 29 W/K). Les gains plus importants sont à chercher hors de cette famille (créneaux plus longs, essais plus longs, 7.4 a).</li>
 </ul>
 <p><strong>Conséquence pratique.</strong> Évaluer une excitation candidate ne demande plus d'entraîner un modèle : il suffit de simuler quelques centaines de bâtiments et de lire le σ moyen prédit. C'est une version instantanée de l'optimisation hors site de l'article, valable tant que les candidates restent dans la famille d'excitations apprise (3.7).</p>
+<h4 id="c)-Imposer-l'excitation-la-plus-informative-:-g%C3%A9n%C3%A9raliste-ou-sp%C3%A9cialiste-?">c) Imposer l'excitation la plus informative : généraliste ou spécialiste ?<a class="anchor-link" href="#c)-Imposer-l'excitation-la-plus-informative-:-g%C3%A9n%C3%A9raliste-ou-sp%C3%A9cialiste-?">¶</a></h4><p>Fixer une excitation informative, puis entraîner un modèle sur elle seule, c'est la démarche de la phase 2 de l'article. Je l'ai testée avec le modèle complet (<code>scripts/specialist_cnn.py</code>) sur les trois excitations de plus faible σ prédit en validation (7.4 b) :</p>
+<ul>
+<li>un CNN-GRU de configuration identique au modèle final (architecture, perte, bruit de 0,05 °C) est entraîné <strong>uniquement</strong> sur les maisons des fichiers d'entraînement qui ont reçu l'excitation, avec arrêt précoce sur celles des fichiers de validation ;</li>
+<li>il est comparé au généraliste (700 000 simulations) sur les maisons des fichiers de test qui ont reçu la même excitation.</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=s7-c4c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ARTIFACTS</span> <span class="o">/</span> <span class="s2">"eval"</span> <span class="o">/</span> <span class="s2">"specialists_cnn"</span> <span class="o">/</span> <span class="s2">"specialists_cnn.csv"</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[37]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th></th>
+<th>simulations d'entraînement</th>
+<th>simulations de test</th>
+<th>RMSE HLC</th>
+<th>RMSE HLC_ext</th>
+<th>RMSE tau_n</th>
+<th>R² HLC</th>
+<th>R² HLC_ext</th>
+<th>R² tau_n</th>
+</tr>
+<tr>
+<th>excitation</th>
+<th>modèle</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="2" valign="top">excitation 1 (56.0 kWh)</th>
+<th>spécialiste CNN-GRU</th>
+<td>6117.0</td>
+<td>1355.0</td>
+<td>22.739</td>
+<td>12.751</td>
+<td>1.729</td>
+<td>0.476</td>
+<td>0.440</td>
+<td>0.318</td>
+</tr>
+<tr>
+<th>généraliste (700 000 sim.)</th>
+<td>700000.0</td>
+<td>1355.0</td>
+<td>22.747</td>
+<td>12.582</td>
+<td>1.717</td>
+<td>0.476</td>
+<td>0.455</td>
+<td>0.327</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">excitation 2 (7.7 kWh)</th>
+<th>spécialiste CNN-GRU</th>
+<td>567.0</td>
+<td>92.0</td>
+<td>23.436</td>
+<td>16.291</td>
+<td>1.580</td>
+<td>0.330</td>
+<td>0.010</td>
+<td>0.125</td>
+</tr>
+<tr>
+<th>généraliste (700 000 sim.)</th>
+<td>700000.0</td>
+<td>92.0</td>
+<td>21.583</td>
+<td>13.833</td>
+<td>1.589</td>
+<td>0.432</td>
+<td>0.286</td>
+<td>0.114</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">excitation 3 (8.8 kWh)</th>
+<th>spécialiste CNN-GRU</th>
+<td>499.0</td>
+<td>134.0</td>
+<td>25.433</td>
+<td>15.475</td>
+<td>1.876</td>
+<td>0.270</td>
+<td>-0.038</td>
+<td>0.125</td>
+</tr>
+<tr>
+<th>généraliste (700 000 sim.)</th>
+<td>700000.0</td>
+<td>134.0</td>
+<td>22.540</td>
+<td>12.490</td>
+<td>1.672</td>
+<td>0.426</td>
+<td>0.324</td>
+<td>0.304</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=s7-md4c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><strong>Lecture.</strong></p>
+<ul>
+<li><strong>Imposer une excitation informative améliore le généraliste, sans rien ré-entraîner.</strong> En chauffe continue (1 355 maisons de test), $R^2$ = 0,48 sur le HLC contre 0,39 toutes excitations confondues, 0,46 sur $\mathrm{HLC}_{ext}$ (contre 0,32) et 0,33 sur $\tau_n$ (contre 0,22). Les deux créneaux d'une heure donnent 0,43 sur le HLC, sur 92 et 134 maisons seulement.</li>
+<li><strong>Le spécialiste ne fait jamais mieux.</strong> Avec 6 117 maisons (chauffe continue), il égale le généraliste à 0,01 près. Avec 500 à 570 maisons (créneaux), il est nettement moins bon : 0,27 à 0,33 contre 0,43 sur le HLC, et il perd presque tout sur $\mathrm{HLC}_{ext}$ (≈ 0 contre 0,29 à 0,32).</li>
+<li><strong>Pourquoi.</strong> La physique est la même d'une excitation à l'autre. Le généraliste apprend sur 700 000 maisons ce qui distingue un bâtiment déperditif et réutilise ce savoir pour chaque excitation : c'est le gain d'une régression poolée sur des régressions séparées, qui emprunte de l'information aux autres groupes.</li>
+</ul>
+<p>Le spécialiste de la chauffe continue a utilisé les 60 époques autorisées, mais son score de validation ne progressait presque plus depuis l'époque 48.</p>
+<p><strong>Conséquence.</strong> Dans ces données, un modèle dédié à une excitation n'apporte rien par rapport au généraliste, même avec 6 000 bâtiments ; avec quelques centaines, il est nettement moins bon. Un seul généraliste permet à la fois de <strong>choisir</strong> l'excitation (7.4 b) et d'<strong>interpréter</strong> l'essai, sans ré-entraînement.</p>
 <h3 id="7.5-Robustesse-au-bruit-sur-le-test">7.5 Robustesse au bruit sur le test<a class="anchor-link" href="#7.5-Robustesse-au-bruit-sur-le-test">¶</a></h3>
 </div>
 </div>
@@ -12707,7 +12869,7 @@ C'est l'analogue des moindres carrés généralisés réalisables (FGLS), avec d
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">display</span><span class="p">(</span><span class="n">read_table</span><span class="p">(</span><span class="n">EVAL_TEST</span> <span class="o">/</span> <span class="s2">"noise_robustness_final_700k_noise005.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
@@ -12802,7 +12964,7 @@ C'est l'analogue des moindres carrés généralisés réalisables (FGLS), avec d
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[37]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[38]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -12910,7 +13072,7 @@ C'est l'analogue des moindres carrés généralisés réalisables (FGLS), avec d
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="sec8"></a></p>
 <h2 id="8.-Conclusion-et-perspectives">8. Conclusion et perspectives<a class="anchor-link" href="#8.-Conclusion-et-perspectives">¶</a></h2><p><strong>Résultat.</strong> Un CNN-GRU qui, à partir de 8 h de mesures, prédit les six indicateurs avec des intervalles calibrés, respecte les relations physiques par construction (un modèle libre les viole dans 97,5 % des cas) et reste stable jusqu'à 0,10 °C de bruit. Sur le test : HLC à 8,5 % d'erreur relative moyenne ($R^2$ 0,39), $\mathrm{HLC}_{ext}$ 0,32, $\tau_n$ 0,22.</p>
-<p><strong>Ce que j'en retiens.</strong> L'EDA a révélé que le jeu cache des expériences contrôlées (des milliers de maisons partagent la même excitation), et qu'il s'agit d'un problème inverse mal posé : des maisons très différentes produisent des courbes quasi identiques, et ce qui les distingue se joue à l'échelle du bruit d'un capteur (3.7). Cinq leviers indépendants ont ensuite confirmé ce plafond (6.6). <strong>La performance est limitée par l'essai, et c'est sur lui qu'il faut agir.</strong> Le modèle aide à le faire : son incertitude prédite classe les excitations mieux que l'erreur mesurée, et désigne un essai court en énergie aussi informatif que la chauffe continue (7.4 b).</p>
+<p><strong>Ce que j'en retiens.</strong> L'EDA a révélé que le jeu cache des expériences contrôlées (des milliers de maisons partagent la même excitation), et qu'il s'agit d'un problème inverse mal posé : des maisons très différentes produisent des courbes quasi identiques, et ce qui les distingue se joue à l'échelle du bruit d'un capteur (3.7). Cinq leviers indépendants ont ensuite confirmé ce plafond (6.6). <strong>La performance est limitée par l'essai, et c'est sur lui qu'il faut agir.</strong> Le modèle aide à le faire : son incertitude prédite classe les excitations mieux que l'erreur mesurée (7.4 b), et un seul généraliste suffit, puisqu'un modèle dédié à une excitation ne fait pas mieux (7.4 c).</p>
 <p><strong>Perspectives</strong>, par priorité :</p>
 <ol>
 <li><strong>Concevoir l'excitation avec le modèle.</strong> La section 7.4 b montre que la variance a posteriori prédite classe les excitations mieux que l'erreur mesurée. Prochaine étape : un plan d'expérience bayésien, multi-objectif (7.3), sur une famille d'excitations élargie (créneaux de plus de 2 h, essais plus longs), après ré-entraînement sur cette famille.</li>

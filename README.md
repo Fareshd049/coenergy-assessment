@@ -70,6 +70,9 @@ uv run python scripts/specialist_eval.py --data-folder data/quentin_house
 
 # Évaluation excitation par excitation (section 7.4 b, environ 10 minutes sur CPU)
 uv run python scripts/excitation_eval.py --data-folder data/quentin_house
+
+# CNN-GRU spécialiste des excitations les plus informatives (section 7.4 c, environ 1 h 30 sur CPU)
+uv run python scripts/specialist_cnn.py --data-folder data/quentin_house
 ```
 
 `notebooks/kaggle_train.ipynb` enchaîne ces entraînements sur Kaggle. Les listes d'expériences sont en tête du notebook ; il clone le dépôt avec un jeton stocké dans les *secrets* Kaggle.
