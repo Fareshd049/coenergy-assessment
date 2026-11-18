@@ -6,9 +6,12 @@
 
 À partir de 8 h de mesures à la minute de la température intérieure $T_{int}(t)$ et du chauffage $U(t)$, un réseau CNN-GRU prédit six indicateurs d'un bâtiment, `[HLC, HLC_ext, HLC_mit, tau_b, tau_n, tau_inf]`, chacun avec un intervalle de confiance calibré. Les relations physiques ($\mathrm{HLC} = \mathrm{HLC}_{ext} + \mathrm{HLC}_{mit}$, $0 < \tau_n \le \tau_\infty \le \tau_b$) sont **garanties par construction**.
 
-![Le problème physique](docs/figures/probleme_physique.png)
+> [!IMPORTANT]
+> ### Lire le rapport complet
+> - **En un clic, dans le navigateur** : [version HTML](https://htmlpreview.github.io/?https://github.com/Fareshd049/coenergy-assessment/blob/main/notebooks/report.html) · [version notebook (nbviewer)](https://nbviewer.org/github/Fareshd049/coenergy-assessment/blob/main/notebooks/report.ipynb)
+> - **Dans le dépôt** : [`notebooks/report.html`](notebooks/report.html) (à télécharger puis ouvrir, sans installation) · [`notebooks/report.ipynb`](notebooks/report.ipynb) (exécutable)
 
-**Lire le rapport complet :** [`notebooks/report.html`](notebooks/report.html) (à télécharger puis ouvrir dans un navigateur, sans installation) ou [`notebooks/report.ipynb`](notebooks/report.ipynb).
+![Le problème physique](docs/figures/probleme_physique.png)
 
 ## En bref
 
