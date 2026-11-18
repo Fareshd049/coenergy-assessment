@@ -6,7 +6,7 @@ regression whose penalty is chosen on an inner holdout. Time constants are
 regressed on their log, as for the neural models.
 
 Usage:
-    uv run python scripts/rocket_baseline.py --config configs/full.yaml --n-kernels 2000
+    uv run python scripts/rocket_baseline.py --config configs/cnn_gru_share_nll.yaml --n-kernels 2000
 
 Outputs in ``artifacts/runs/rocket_ridge/``: ``val_metrics.json`` and
 ``val_predictions.pt``.

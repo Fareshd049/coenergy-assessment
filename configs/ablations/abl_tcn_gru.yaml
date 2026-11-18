@@ -1,5 +1,5 @@
 # Architecture variant: TCN (dilations 1..32) + BiGRU, inspired by battery TCN-LSTM models.
-# Same data, head, loss and training as configs/full.yaml.
+# Same data, head, loss and training as configs/cnn_gru_share_nll.yaml.
 name: abl_tcn_gru
 data:
   folder: data/quentin_house

@@ -1,4 +1,4 @@
-# Final model: all 14 training files (700 000 simulations), same architecture as full.yaml.
+# Final model: all 14 training files (700 000 simulations), same architecture as configs/cnn_gru_share_nll.yaml.
 name: final_700k
 data:
   folder: data/quentin_house

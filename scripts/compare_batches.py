@@ -2,9 +2,9 @@
 
 Loads one file at a time (peak memory ~ one batch) and writes:
 
-* ``artifacts/batch_summary.csv``: one row per file (targets, excitations, checks).
-* ``artifacts/figures/batch_target_quantiles.png``: per-file target medians and IQR.
-* ``artifacts/figures/batch_hlc_ecdf.png``: HLC empirical CDF of every file.
+* ``artifacts/eda/batch_summary.csv``: one row per file (targets, excitations, checks).
+* ``artifacts/eda/batch_target_quantiles.png``: per-file target medians and IQR.
+* ``artifacts/eda/batch_hlc_ecdf.png``: HLC empirical CDF of every file.
 
 Usage:
     uv run python scripts/compare_batches.py
@@ -126,8 +126,8 @@ def main() -> None:
         del b, temp, u
 
     df = pd.DataFrame(rows)
-    out = Path("artifacts")
-    (out / "figures").mkdir(parents=True, exist_ok=True)
+    out = Path("artifacts/eda")
+    out.mkdir(parents=True, exist_ok=True)
     df.to_csv(out / "batch_summary.csv", index=False)
 
     # ---- Figures -------------------------------------------------------
@@ -147,7 +147,7 @@ def main() -> None:
         ax.set_xlabel("batch")
     axes[0, 0].legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(out / "figures" / "batch_target_quantiles.png", dpi=120)
+    fig.savefig(out / "batch_target_quantiles.png", dpi=120)
 
     fig, ax = plt.subplots(figsize=(7, 4))
     for h in hlc_samples.values():
@@ -156,7 +156,7 @@ def main() -> None:
     ax.set_ylabel("ECDF")
     ax.set_title("HLC distribution per batch")
     fig.tight_layout()
-    fig.savefig(out / "figures" / "batch_hlc_ecdf.png", dpi=120)
+    fig.savefig(out / "batch_hlc_ecdf.png", dpi=120)
 
     # ---- Verdict -------------------------------------------------------
     print("\n== Summary over files ==")
@@ -178,7 +178,7 @@ def main() -> None:
         f"\nKS tests vs {files[0].name} with p < 0.01: {n_low} / {len(ks_cols) * (len(df) - 1)}"
     )
     print(f"T values seen: {sorted(df['T'].unique().tolist())}")
-    print("Saved artifacts/batch_summary.csv and two figures in artifacts/figures/")
+    print("Saved artifacts/eda/batch_summary.csv and two figures")
 
 
 if __name__ == "__main__":

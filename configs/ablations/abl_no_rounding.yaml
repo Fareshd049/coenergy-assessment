@@ -1,5 +1,5 @@
 # Diagnostic: Tint and U kept at full simulator precision (no 0.01 °C rounding).
-# Measures how much the sensor resolution limits identifiability. Otherwise identical to configs/full.yaml.
+# Measures how much the sensor resolution limits identifiability. Otherwise identical to configs/cnn_gru_share_nll.yaml.
 name: abl_no_rounding
 data:
   folder: data/quentin_house

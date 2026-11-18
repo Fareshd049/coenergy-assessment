@@ -2,7 +2,7 @@
 
 Usage:
     uv run python scripts/train.py --config configs/debug.yaml
-    uv run python scripts/train.py --config configs/full.yaml --data-folder /kaggle/input/quentin-house
+    uv run python scripts/train.py --config configs/cnn_gru_share_nll.yaml --data-folder /kaggle/input/quentin-house
 
 Outputs (in ``artifacts/runs/<name>/``): ``config.yaml``, ``model.pt``
 (checkpoint), ``history.csv``, ``val_metrics.json`` and ``val_predictions.pt``.

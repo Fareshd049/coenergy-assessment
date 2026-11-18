@@ -17,3 +17,6 @@ artifacts/runs/*/*.pt
 artifacts/runs/*/*.pt
 artifacts/runs/*/*.pt
 artifacts/cache/
+
+# Trained models are versioned for reproducibility
+!artifacts/runs/*/model.pt

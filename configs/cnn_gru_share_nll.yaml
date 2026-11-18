@@ -1,5 +1,5 @@
-# Noise robustness: 0.05 °C noise, no derivative channel. Otherwise identical to configs/full.yaml.
-name: abl_noise005_noderiv
+# Main experiment (Kaggle GPU): 14 training files x 10 000 = 140 000 simulations.
+name: cnn_gru_share_nll
 data:
   folder: data/quentin_house
   per_batch_train: 10000
@@ -7,7 +7,7 @@ data:
 model:
   arch: cnn_gru
   head: share
-  use_derivative: false
+  use_derivative: true
   predict_uncertainty: true
   conv_channels: 64
   gru_hidden: 64
@@ -22,7 +22,7 @@ train:
   lr: 0.002
   mse_warmup_epochs: 2
   patience: 6
-  noise_temp_std: 0.05
+  noise_temp_std: 0.0
   amp: true
   device: auto
   num_workers: 2

@@ -1,5 +1,5 @@
-# Noise robustness: trained with 0.05 °C noise. Otherwise identical to configs/full.yaml.
-name: abl_noise005
+# Noise robustness: noise level drawn per simulation in [0, 0.1] °C. Otherwise identical to configs/cnn_gru_share_nll.yaml.
+name: abl_noise_rand010
 data:
   folder: data/quentin_house
   per_batch_train: 10000
@@ -22,7 +22,8 @@ train:
   lr: 0.002
   mse_warmup_epochs: 2
   patience: 6
-  noise_temp_std: 0.05
+  noise_temp_std: 0.0
   amp: true
   device: auto
   num_workers: 2
+  noise_temp_max: 0.1

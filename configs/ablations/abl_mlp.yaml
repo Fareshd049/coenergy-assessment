@@ -1,4 +1,4 @@
-# Ablation: one change versus configs/full.yaml (140 000 training simulations).
+# Ablation: one change versus configs/cnn_gru_share_nll.yaml (140 000 training simulations).
 name: abl_mlp
 data:
   folder: data/quentin_house

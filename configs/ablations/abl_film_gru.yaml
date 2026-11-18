@@ -1,5 +1,5 @@
 # Architecture variant: U modulates the Tint features (FiLM) instead of being an input channel.
-# Same data, head, loss and training as configs/full.yaml.
+# Same data, head, loss and training as configs/cnn_gru_share_nll.yaml.
 name: abl_film_gru
 data:
   folder: data/quentin_house

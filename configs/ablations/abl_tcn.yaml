@@ -1,5 +1,5 @@
 # Architecture variant: TCN only, no recurrence.
-# Same data, head, loss and training as configs/full.yaml.
+# Same data, head, loss and training as configs/cnn_gru_share_nll.yaml.
 name: abl_tcn
 data:
   folder: data/quentin_house
