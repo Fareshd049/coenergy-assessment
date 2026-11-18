@@ -1,71 +1,153 @@
-<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1000 500" width="1000" height="500" font-family="DejaVu Sans, Arial, sans-serif">
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
-  </defs>
-  <rect width="1000" height="500" fill="#ffffff"/>
-  <text x="20" y="28" font-size="18" font-weight="bold" fill="#222">Architecture retenue : CNN-GRU à sorties physiquement contraintes</text>
-
-  <!-- encodeur -->
-  <rect x="20" y="60" width="150" height="110" rx="8" fill="#fbecee" stroke="#d1495b"/>
-  <text x="95" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#a52a3c">Entrées</text>
-  <text x="95" y="108" font-size="12" text-anchor="middle" fill="#333">480 pas × 3 canaux</text>
-  <text x="95" y="128" font-size="12" text-anchor="middle" fill="#333">T<tspan dy="4" font-size="9">int</tspan><tspan dy="-4">, dT</tspan><tspan dy="4" font-size="9">int</tspan><tspan dy="-4">/dt, U</tspan></text>
-  <text x="95" y="150" font-size="11" text-anchor="middle" fill="#666">standardisées</text>
-
-  <rect x="200" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
-  <text x="287" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">3 convolutions 1D</text>
-  <text x="287" y="108" font-size="12" text-anchor="middle" fill="#333">noyaux 7, 5, 5 (dilaté)</text>
-  <text x="287" y="128" font-size="12" text-anchor="middle" fill="#333">480 → 240 pas, 64 canaux</text>
-  <text x="287" y="150" font-size="11" text-anchor="middle" fill="#666">motifs locaux de 7 à 25 min</text>
-
-  <rect x="405" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
-  <text x="492" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">GRU bidirectionnel</text>
-  <text x="492" y="108" font-size="12" text-anchor="middle" fill="#333">2 couches, 64 par sens</text>
-  <text x="492" y="128" font-size="12" text-anchor="middle" fill="#333">dynamique sur 8 h</text>
-  <text x="492" y="150" font-size="11" text-anchor="middle" fill="#666">forme globale de la réponse</text>
-
-  <rect x="610" y="60" width="175" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
-  <text x="697" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">Pooling</text>
-  <text x="697" y="108" font-size="12" text-anchor="middle" fill="#333">attention + moyenne</text>
-  <text x="697" y="128" font-size="12" text-anchor="middle" fill="#333">→ 256 valeurs</text>
-  <text x="697" y="150" font-size="11" text-anchor="middle" fill="#666">pondère l'après-allumage</text>
-
-  <rect x="815" y="60" width="165" height="110" rx="8" fill="#e8f1f8" stroke="#2e86ab"/>
-  <text x="897" y="85" font-size="14" text-anchor="middle" font-weight="bold" fill="#1f6688">Couche dense</text>
-  <text x="897" y="108" font-size="12" text-anchor="middle" fill="#333">128, GELU</text>
-  <text x="897" y="128" font-size="12" text-anchor="middle" fill="#333">résumé de l'essai</text>
-
-  <line x1="170" y1="115" x2="196" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-  <line x1="375" y1="115" x2="401" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-  <line x1="580" y1="115" x2="606" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-  <line x1="785" y1="115" x2="811" y2="115" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-
-  <!-- vers les têtes -->
-  <path d="M897,170 L897,205 L530,205 L530,232" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-  <line x1="897" y1="205" x2="897" y2="232" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-
-  <!-- tête physique -->
-  <rect x="20" y="236" width="770" height="160" rx="8" fill="#eef6ef" stroke="#3a7d44"/>
-  <text x="405" y="260" font-size="14" text-anchor="middle" font-weight="bold" fill="#2c6135">Tête physique : les contraintes sont garanties par construction</text>
-  <text x="40" y="290" font-size="12" fill="#333">5 paramètres ancrés sur le bâtiment typique :  p = μ + s · a   (a : sortie du réseau ; μ, s : statistiques d'entraînement)</text>
-  <text x="40" y="312" font-size="12" fill="#333">HLC = exp(p<tspan dy="4" font-size="9">1</tspan><tspan dy="-4">),   r = sigmoïde(p</tspan><tspan dy="4" font-size="9">2</tspan><tspan dy="-4">) ∈ ]0, 1[,   τ</tspan><tspan dy="4" font-size="9">n</tspan><tspan dy="-4"> = exp(p</tspan><tspan dy="4" font-size="9">3</tspan><tspan dy="-4">),   δ</tspan><tspan dy="4" font-size="9">1</tspan><tspan dy="-4"> = p</tspan><tspan dy="4" font-size="9">4</tspan><tspan dy="-4">,   δ</tspan><tspan dy="4" font-size="9">2</tspan><tspan dy="-4"> = p</tspan><tspan dy="4" font-size="9">5</tspan></text>
-  <rect x="40" y="326" width="350" height="56" rx="6" fill="#ffffff" stroke="#3a7d44"/>
-  <text x="215" y="349" font-size="13" text-anchor="middle" fill="#222">HLC<tspan dy="4" font-size="10">ext</tspan><tspan dy="-4"> = r · HLC</tspan></text>
-  <text x="215" y="371" font-size="13" text-anchor="middle" fill="#222">HLC<tspan dy="4" font-size="10">mit</tspan><tspan dy="-4"> = (1 − r) · HLC</tspan></text>
-  <rect x="410" y="326" width="360" height="56" rx="6" fill="#ffffff" stroke="#3a7d44"/>
-  <text x="590" y="349" font-size="13" text-anchor="middle" fill="#222">τ<tspan dy="4" font-size="10">∞</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="10">n</tspan><tspan dy="-4"> + exp(δ</tspan><tspan dy="4" font-size="10">1</tspan><tspan dy="-4">)</tspan></text>
-  <text x="590" y="371" font-size="13" text-anchor="middle" fill="#222">τ<tspan dy="4" font-size="10">b</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="10">∞</tspan><tspan dy="-4"> + exp(δ</tspan><tspan dy="4" font-size="10">2</tspan><tspan dy="-4">)</tspan></text>
-
-  <!-- tête d'incertitude -->
-  <rect x="810" y="236" width="170" height="160" rx="8" fill="#fdf5e6" stroke="#d9a441"/>
-  <text x="895" y="260" font-size="14" text-anchor="middle" font-weight="bold" fill="#8a6414">Tête d'incertitude</text>
-  <text x="895" y="292" font-size="12" text-anchor="middle" fill="#333">log σ² pour</text>
-  <text x="895" y="310" font-size="12" text-anchor="middle" fill="#333">les 6 indicateurs</text>
-  <text x="895" y="342" font-size="11" text-anchor="middle" fill="#666">→ intervalles</text>
-  <text x="895" y="358" font-size="11" text-anchor="middle" fill="#666">de confiance</text>
-
-  <!-- perte -->
-  <rect x="20" y="420" width="960" height="44" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
-  <text x="500" y="447" font-size="13" text-anchor="middle" fill="#222">Perte β-NLL gaussienne sur cibles standardisées (log τ) · même poids par famille · 210 000 paramètres</text>
-  <text x="500" y="488" font-size="11" text-anchor="middle" fill="#666">Variantes testées avec la même tête : TCN, TCN-GRU (inspiré des TCN-LSTM pour batteries, BMW Group), FiLM-GRU, MLP</text>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1240 600" width="1240" height="600" font-family="DejaVu Sans, Arial, sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<rect width="1240" height="600" fill="#fff"/>
+<text x="20" y="30" font-size="17" text-anchor="start" fill="#222" font-weight="bold" font-style="normal">Architecture CNN-GRU à sorties physiquement contraintes (210 000 paramètres)</text>
+<text x="85" y="72" font-size="13" text-anchor="middle" fill="#a52a3c" font-weight="bold" font-style="normal">Entrée</text>
+<rect x="30" y="100" width="110" height="80" fill="#fbf7f7" stroke="#c9a3aa"/>
+<path d="M35,170 C60,168 70,140 90,130 S125,118 135,114" fill="none" stroke="#222" stroke-width="1.6"/>
+<text x="85" y="196" font-size="11" text-anchor="middle" fill="#222" font-weight="normal" font-style="normal">T<tspan dy="4" font-size="9">int</tspan><tspan dy="-4"></tspan></text>
+<rect x="30" y="205" width="110" height="80" fill="#fbf7f7" stroke="#c9a3aa"/>
+<path d="M35,265 L65,265 L67,225 C75,250 90,260 105,263 L107,275 C115,267 125,265 135,265" fill="none" stroke="#555" stroke-width="1.4"/>
+<text x="85" y="301" font-size="11" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">dT/dt</text>
+<rect x="30" y="310" width="110" height="80" fill="#fbf7f7" stroke="#c9a3aa"/>
+<polyline points="35,375 65,375 65,328 105,328 105,375 135,375" fill="none" stroke="#d1495b" stroke-width="1.6"/>
+<text x="85" y="406" font-size="11" text-anchor="middle" fill="#d1495b" font-weight="normal" font-style="normal">U</text>
+<text x="85" y="430" font-size="11" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">3 canaux × 480 min</text>
+<line x1="145" y1="250" x2="192" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<polygon points="200,150.0 214,136.0 248,136.0 234,150.0" fill="#e6f0f8" stroke="#334" stroke-width="0.8"/>
+<polygon points="234,150.0 248,136.0 248,336.0 234,350.0" fill="#a9c9e1" stroke="#334" stroke-width="0.8"/>
+<rect x="200" y="150.0" width="34" height="200" fill="#cfe3f1" stroke="#334" stroke-width="0.8"/>
+<text x="222" y="128.0" font-size="11" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">k = 7</text>
+<text x="220" y="368.0" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">64 × 480</text>
+<line x1="250" y1="250" x2="284" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<polygon points="290,200.0 304,186.0 338,186.0 324,200.0" fill="#e6f0f8" stroke="#334" stroke-width="0.8"/>
+<polygon points="324,200.0 338,186.0 338,286.0 324,300.0" fill="#a9c9e1" stroke="#334" stroke-width="0.8"/>
+<rect x="290" y="200.0" width="34" height="100" fill="#cfe3f1" stroke="#334" stroke-width="0.8"/>
+<text x="312" y="178.0" font-size="11" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">k = 5, pas 2</text>
+<text x="310" y="318.0" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">64 × 240</text>
+<line x1="340" y1="250" x2="374" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<polygon points="380,200.0 394,186.0 428,186.0 414,200.0" fill="#e6f0f8" stroke="#334" stroke-width="0.8"/>
+<polygon points="414,200.0 428,186.0 428,286.0 414,300.0" fill="#a9c9e1" stroke="#334" stroke-width="0.8"/>
+<rect x="380" y="200.0" width="34" height="100" fill="#cfe3f1" stroke="#334" stroke-width="0.8"/>
+<text x="402" y="178.0" font-size="11" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">k = 5, dilat. 2</text>
+<text x="400" y="318.0" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">64 × 240</text>
+<text x="305" y="108" font-size="13" text-anchor="middle" fill="#1f6688" font-weight="bold" font-style="normal">Convolutions 1D</text>
+<text x="305" y="410" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="italic">chaque bloc : Conv1D → BatchNorm → GELU</text>
+<line x1="430" y1="250" x2="476" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="585.0" y="108" font-size="13" text-anchor="middle" fill="#1f6688" font-weight="bold" font-style="normal">GRU bidirectionnel</text>
+<rect x="485" y="195" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="502" y="216" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<line x1="519" y1="207" x2="530" y2="207" stroke="#2e86ab" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="530" y1="219" x2="519" y2="219" stroke="#d9a441" stroke-width="1.2" marker-end="url(#ar)"/>
+<rect x="530" y="195" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="547" y="216" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<line x1="564" y1="207" x2="575" y2="207" stroke="#2e86ab" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="575" y1="219" x2="564" y2="219" stroke="#d9a441" stroke-width="1.2" marker-end="url(#ar)"/>
+<rect x="575" y="195" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="592" y="216" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<text x="624.5" y="216" font-size="12" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">…</text>
+<rect x="640" y="195" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="657" y="216" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<text x="472" y="216" font-size="9" text-anchor="end" fill="#555" font-weight="normal" font-style="normal">couche 1</text>
+<rect x="485" y="265" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="502" y="286" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<line x1="519" y1="277" x2="530" y2="277" stroke="#2e86ab" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="530" y1="289" x2="519" y2="289" stroke="#d9a441" stroke-width="1.2" marker-end="url(#ar)"/>
+<rect x="530" y="265" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="547" y="286" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<line x1="564" y1="277" x2="575" y2="277" stroke="#2e86ab" stroke-width="1.2" marker-end="url(#ar)"/>
+<line x1="575" y1="289" x2="564" y2="289" stroke="#d9a441" stroke-width="1.2" marker-end="url(#ar)"/>
+<rect x="575" y="265" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="592" y="286" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<text x="624.5" y="286" font-size="12" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">…</text>
+<rect x="640" y="265" width="34" height="34" rx="6" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="657" y="286" font-size="9" text-anchor="middle" fill="#1f6688" font-weight="normal" font-style="normal">GRU</text>
+<text x="472" y="286" font-size="9" text-anchor="end" fill="#555" font-weight="normal" font-style="normal">couche 2</text>
+<line x1="502" y1="229" x2="502" y2="263" stroke="#888" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="547" y1="229" x2="547" y2="263" stroke="#888" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="592" y1="229" x2="592" y2="263" stroke="#888" stroke-width="1" marker-end="url(#ar)"/>
+<line x1="657" y1="229" x2="657" y2="263" stroke="#888" stroke-width="1" marker-end="url(#ar)"/>
+<text x="585.0" y="328" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">→ sens direct    ← sens inverse</text>
+<line x1="550" y1="324" x2="550" y2="324"/>
+<text x="585.0" y="348" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">64 unités par sens, 240 pas</text>
+<text x="585.0" y="364" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">sorties h_t : 240 × 128</text>
+<line x1="695" y1="250" x2="729" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="795" y="108" font-size="13" text-anchor="middle" fill="#1f6688" font-weight="bold" font-style="normal">Pooling</text>
+<rect x="739" y="226" width="5" height="4" fill="#2e86ab" opacity="0.8"/>
+<rect x="746" y="226" width="5" height="4" fill="#2e86ab" opacity="0.8"/>
+<rect x="753" y="224" width="5" height="6" fill="#2e86ab" opacity="0.8"/>
+<rect x="760" y="226" width="5" height="4" fill="#2e86ab" opacity="0.8"/>
+<rect x="767" y="224" width="5" height="6" fill="#2e86ab" opacity="0.8"/>
+<rect x="774" y="222" width="5" height="8" fill="#2e86ab" opacity="0.8"/>
+<rect x="781" y="202" width="5" height="28" fill="#2e86ab" opacity="0.8"/>
+<rect x="788" y="178" width="5" height="52" fill="#2e86ab" opacity="0.8"/>
+<rect x="795" y="194" width="5" height="36" fill="#2e86ab" opacity="0.8"/>
+<rect x="802" y="210" width="5" height="20" fill="#2e86ab" opacity="0.8"/>
+<rect x="809" y="216" width="5" height="14" fill="#2e86ab" opacity="0.8"/>
+<rect x="816" y="220" width="5" height="10" fill="#2e86ab" opacity="0.8"/>
+<rect x="823" y="222" width="5" height="8" fill="#2e86ab" opacity="0.8"/>
+<rect x="830" y="222" width="5" height="8" fill="#2e86ab" opacity="0.8"/>
+<rect x="837" y="224" width="5" height="6" fill="#2e86ab" opacity="0.8"/>
+<rect x="844" y="224" width="5" height="6" fill="#2e86ab" opacity="0.8"/>
+<line x1="735" y1="230" x2="855" y2="230" stroke="#555"/>
+<text x="795" y="168" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">poids d'attention α_t</text>
+<text x="795" y="254" font-size="11" text-anchor="middle" fill="#222" font-weight="normal" font-style="normal">c = Σ α_t h_t</text>
+<text x="795" y="274" font-size="11" text-anchor="middle" fill="#222" font-weight="normal" font-style="normal">+ moyenne de h_t</text>
+<polygon points="780,290 788,282 818,282 810,290" fill="#e6f0f8" stroke="#334" stroke-width="0.8"/>
+<polygon points="810,290 818,282 818,342 810,350" fill="#a9c9e1" stroke="#334" stroke-width="0.8"/>
+<rect x="780" y="290" width="30" height="60" fill="#cfe3f1" stroke="#334" stroke-width="0.8"/>
+<text x="795" y="370" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">256</text>
+<line x1="860" y1="250" x2="888" y2="250" stroke="#555" stroke-width="1.6" marker-end="url(#ar)"/>
+<text x="900" y="108" font-size="13" text-anchor="middle" fill="#1f6688" font-weight="bold" font-style="normal">Dense</text>
+<circle cx="900" cy="175" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<circle cx="900" cy="205" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<circle cx="900" cy="235" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<circle cx="900" cy="265" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<circle cx="900" cy="295" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<circle cx="900" cy="325" r="10" fill="#e6f0f8" stroke="#2e86ab"/>
+<text x="900" y="362" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">128, GELU</text>
+<text x="900" y="376" font-size="10" text-anchor="middle" fill="#555" font-weight="normal" font-style="normal">dropout 0,1</text>
+<rect x="970" y="80" width="250" height="250" rx="10" fill="#eef6ef" stroke="#3a7d44"/>
+<text x="1095" y="102" font-size="13" text-anchor="middle" fill="#2c6135" font-weight="bold" font-style="normal">Tête physique</text>
+<line x1="910" y1="190" x2="988" y2="130" stroke="#bbb" stroke-width="0.6"/>
+<circle cx="998" cy="130" r="10" fill="#ffffff" stroke="#3a7d44"/>
+<text x="998" y="134" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="normal">p<tspan dy="4" font-size="9">1</tspan><tspan dy="-4"></tspan></text>
+<line x1="910" y1="190" x2="988" y2="170" stroke="#bbb" stroke-width="0.6"/>
+<circle cx="998" cy="170" r="10" fill="#ffffff" stroke="#3a7d44"/>
+<text x="998" y="174" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="normal">p<tspan dy="4" font-size="9">2</tspan><tspan dy="-4"></tspan></text>
+<line x1="910" y1="190" x2="988" y2="210" stroke="#bbb" stroke-width="0.6"/>
+<circle cx="998" cy="210" r="10" fill="#ffffff" stroke="#3a7d44"/>
+<text x="998" y="214" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="normal">p<tspan dy="4" font-size="9">3</tspan><tspan dy="-4"></tspan></text>
+<line x1="910" y1="190" x2="988" y2="250" stroke="#bbb" stroke-width="0.6"/>
+<circle cx="998" cy="250" r="10" fill="#ffffff" stroke="#3a7d44"/>
+<text x="998" y="254" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="normal">p<tspan dy="4" font-size="9">4</tspan><tspan dy="-4"></tspan></text>
+<line x1="910" y1="190" x2="988" y2="290" stroke="#bbb" stroke-width="0.6"/>
+<circle cx="998" cy="290" r="10" fill="#ffffff" stroke="#3a7d44"/>
+<text x="998" y="294" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="normal">p<tspan dy="4" font-size="9">5</tspan><tspan dy="-4"></tspan></text>
+<text x="1030" y="133" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">HLC = exp(p<tspan dy="4" font-size="8">1</tspan><tspan dy="-4">)</tspan></text>
+<text x="1030" y="159" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">r = sigmoïde(p<tspan dy="4" font-size="8">2</tspan><tspan dy="-4">)</tspan></text>
+<text x="1030" y="185" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">HLC<tspan dy="4" font-size="8">ext</tspan><tspan dy="-4"> = r · HLC</tspan></text>
+<text x="1030" y="211" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">HLC<tspan dy="4" font-size="8">mit</tspan><tspan dy="-4"> = (1 − r) · HLC</tspan></text>
+<text x="1030" y="237" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">τ<tspan dy="4" font-size="8">n</tspan><tspan dy="-4"> = exp(p</tspan><tspan dy="4" font-size="8">3</tspan><tspan dy="-4">)</tspan></text>
+<text x="1030" y="263" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">τ<tspan dy="4" font-size="8">∞</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="8">n</tspan><tspan dy="-4"> + exp(p</tspan><tspan dy="4" font-size="8">4</tspan><tspan dy="-4">)</tspan></text>
+<text x="1030" y="289" font-size="11" text-anchor="start" fill="#222" font-weight="normal" font-style="normal">τ<tspan dy="4" font-size="8">b</tspan><tspan dy="-4"> = τ</tspan><tspan dy="4" font-size="8">∞</tspan><tspan dy="-4"> + exp(p</tspan><tspan dy="4" font-size="8">5</tspan><tspan dy="-4">)</tspan></text>
+<text x="1095" y="320" font-size="9" text-anchor="middle" fill="#2c6135" font-weight="normal" font-style="italic">p = μ + s · a, ancré sur le bâtiment typique</text>
+<rect x="970" y="350" width="250" height="110" rx="10" fill="#fdf5e6" stroke="#d9a441"/>
+<text x="1095" y="372" font-size="13" text-anchor="middle" fill="#8a6414" font-weight="bold" font-style="normal">Tête d'incertitude</text>
+<line x1="910" y1="310" x2="1002" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1002" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<line x1="910" y1="310" x2="1038" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1038" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<line x1="910" y1="310" x2="1074" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1074" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<line x1="910" y1="310" x2="1110" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1110" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<line x1="910" y1="310" x2="1146" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1146" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<line x1="910" y1="310" x2="1182" y2="400" stroke="#ddd" stroke-width="0.6"/>
+<circle cx="1182" cy="410" r="10" fill="#ffffff" stroke="#d9a441"/>
+<text x="1095" y="444" font-size="10" text-anchor="middle" fill="#8a6414" font-weight="normal" font-style="normal">log σ² pour chacun des 6 indicateurs</text>
+<rect x="20" y="490" width="1200" height="44" rx="8" fill="#f4f6f8" stroke="#9aa5b1"/>
+<text x="620.0" y="517" font-size="12" text-anchor="middle" fill="#222" font-weight="normal" font-style="normal">Perte β-NLL gaussienne (β = 0,5) sur cibles standardisées (log τ) · même poids par famille · AdamW, bruit capteur 0,05 °C à l'entraînement</text>
+<text x="620.0" y="560" font-size="12" text-anchor="middle" fill="#2c6135" font-weight="bold" font-style="normal">Garanties par construction, quelle que soit l'entrée :  HLC = HLC<tspan dy="4" font-size="9">ext</tspan><tspan dy="-4"> + HLC</tspan><tspan dy="4" font-size="9">mit</tspan><tspan dy="-4">,  0 &lt; τ</tspan><tspan dy="4" font-size="9">n</tspan><tspan dy="-4"> ≤ τ</tspan><tspan dy="4" font-size="9">∞</tspan><tspan dy="-4"> ≤ τ</tspan><tspan dy="4" font-size="9">b</tspan><tspan dy="-4">,  indicateurs positifs</tspan></text>
 </svg>
